@@ -1,13 +1,13 @@
 const tools = [
-  ['bio.tools', 'bio-tools', 1],
-  ['WorkflowHub', 'workflowhub', 2],
-  ['Bioconda', 'bioconda', 1],
-  ['Galaxy', 'galaxy', 2],
-  ['BioContainers', 'biocontainers', 1],
-  ['OpenEBench', 'openebench', 2],
-  ['Debian Med', 'debian-med', 3],
-  ['Bioconductor', 'bioconductor', 3],
-  ['BIII', 'biii', 3],
+  ['bio.tools', 'bio-tools', 1, 'Tools'],
+  ['WorkflowHub', 'workflowhub', 1, 'Workflows'],
+  ['Bioconda', 'bioconda', 2, 'Packaging'],
+  ['Galaxy', 'galaxy', 2, 'Workflows'],
+  ['BioContainers', 'biocontainers', 2, 'Packaging'],
+  ['OpenEBench', 'openebench', 1, 'Benchmarking'],
+  ['Debian Med', 'debian-med', 2, 'Packaging'],
+  ['Bioconductor', 'bioconductor', 1, 'Packaging'],
+  ['BIII', 'biii', 2, 'Tools'],
 ];
 let preparedLogos;
 
@@ -36,7 +36,8 @@ export async function researchSoftwareExample() {
   return {
     title: 'ELIXIR Research Software Ecosystem',
     centerLogo,
-    components: tools.map(([name, , ring], index) => ({ name, ring, logo: logos[index] })),
+    components: tools.map(([name, , ring, categoryId], index) => ({ name, ring, categoryId, logo: logos[index] })),
+    levelLabels: { 1: 'Deep integration', 2: 'Lightweight integration' },
     categoryColors: [],
   };
 }

@@ -1,4 +1,4 @@
-import { assignColors, contrastColor } from './colors.js';
+import { contrastColor } from './colors.js';
 import { GAP, number, escapeXML, createImages, svgDocument } from './svg.js';
 
 export const RADIAL_FONT_SIZE = 36;
@@ -16,7 +16,7 @@ function rayPath(inner, outer, tip, cap) {
   return `M ${point(inner, tip, -1)} L ${point(outer, cap, -1)} A ${number(cap)} ${number(cap)} 0 1 1 ${point(outer, cap, 1)} L ${point(inner, tip, 1)} A ${number(tip)} ${number(tip)} 0 0 1 ${point(inner, tip, -1)} Z`;
 }
 
-export function renderRadialLayout(entries, { colors, palette, centerLogo, title, idPrefix, monochromeLogos }) {
+export function renderRadialLayout(entries, { centerLogo, title, idPrefix, monochromeLogos, legend }) {
   const halfAngle = Math.PI / Math.max(3, entries.length);
   const sine = Math.sin(halfAngle), cosine = Math.cos(halfAngle);
   const innerRadius = Math.max(112, (MIN_TIP + 3) / sine - MIN_TIP);
@@ -38,7 +38,6 @@ export function renderRadialLayout(entries, { colors, palette, centerLogo, title
   const segments = entries.map((entry, index) => ({
     ...entry, start: index * TAU / entries.length, end: (index + 1) * TAU / entries.length,
   }));
-  assignColors([{ ring: 1, radius: firstRadius, segments }], colors, 0, undefined, palette);
   const defs = [];
   const content = [];
   const images = createImages(defs, idPrefix, monochromeLogos);
@@ -58,5 +57,5 @@ export function renderRadialLayout(entries, { colors, palette, centerLogo, title
     content.push(`<g data-component="${escapeXML(name)}" data-ring="${ring}" data-radius="${number(outer)}"${category} transform="rotate(${rotation})"><path d="${rayPath(inner, outer, tip, cap)}" fill="${color}"/>${images.component(logo, number(outer), 0, flip, textColor, LOGO_SIZE)}<text x="0" y="${RADIAL_FONT_SIZE * 0.33}" fill="${textColor}" text-anchor="middle" xml:space="preserve" transform="translate(${number(labelCenter)} 0) rotate(${flip})">${escapeXML(name)}</text></g>`);
   }
   content.push(images.center(centerLogo, entries.length ? innerRadius : 76));
-  return svgDocument(title, idPrefix, extent, defs, content, RADIAL_FONT_SIZE);
+  return svgDocument(title, idPrefix, extent, defs, content, RADIAL_FONT_SIZE, legend);
 }

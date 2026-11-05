@@ -1,6 +1,7 @@
 /** Numeric and string IDs with the same spelling share a category. */
 export type CategoryId = string | number;
-export type MosaicPalette = 'classic' | 'palette-1' | 'palette-2';
+export type MosaicPalette = 'palette-1' | 'palette-2';
+export type LegendPosition = 'top' | 'right' | 'bottom' | 'left';
 
 export interface RingMosaicComponent {
   name: string;
@@ -22,8 +23,14 @@ export interface RingMosaicOptions {
   idPrefix?: string;
   /** Optional category overrides, as opaque #rgb or #rrggbb colors. */
   categoryColors?: Readonly<Record<string, string>>;
-  /** Automatic color palette. Defaults to "classic"; category overrides take priority. */
+  /** Automatic color palette. Defaults to "palette-1"; category overrides take priority. */
   palette?: MosaicPalette;
+  /** Include category and level legends in the SVG. Defaults to false. */
+  legend?: boolean;
+  /** Place the legend outside the diagram. Defaults to "bottom". */
+  legendPosition?: LegendPosition;
+  /** Optional readable names for numeric levels, used in the legend. */
+  levelLabels?: Readonly<Record<number, string>>;
   /** Width in SVG pixels, using Arial at the supplied font size and weight 500. */
   measureText?: (name: string, fontSize: number) => number;
 }

@@ -5,20 +5,25 @@ import { renderRingMosaic, renderPuzzleMosaic, renderRadialMosaic, renderSpiralM
 const fills = svg => new Map([...svg.matchAll(/<g data-component="([^"]+)"[^>]*><path[^>]+fill="([^"]+)"/g)].map(match => [match[1], match[2]]));
 const renderers = [renderRingMosaic, renderPuzzleMosaic, renderRadialMosaic, renderSpiralMosaic, renderSpiralPuzzleMosaic, renderHoneycombMosaic];
 
-test('supplied palette presets work in all views and preserve the original default', () => {
+test('supplied palettes work in all views and palette 1 is the default', () => {
   const palettes = {
     'palette-1': ['#FF9A4A', '#1F4B6B', '#CFD24F', '#BB424A', '#84BFFD', '#4BAE87'],
     'palette-2': ['#3CBA77', '#FF7BAC', '#3D69DD', '#FED255', '#64E9D1', '#F87553', '#7C7FD3', '#FF8C29', '#5DB1F7', '#BCBD42'],
   };
   const components = [1, 2, 3].flatMap(ring => [0, 1, 2].map(index => ({ name: `${ring}-${index}`, ring, categoryId: index === 0 ? 0 : undefined })));
   for (const render of renderers) {
-    assert.equal(render(components, { idPrefix: 'default' }), render(components, { palette: 'classic', idPrefix: 'default' }));
+    assert.equal(render(components, { idPrefix: 'default' }), render(components, { palette: 'palette-1', idPrefix: 'default' }));
     for (const [palette, expected] of Object.entries(palettes)) {
       const options = { palette, idPrefix: 'preset' };
       const svg = render(components, options), colors = fills(svg);
       assert.equal(colors.size, 9);
       assert.ok([...colors.values()].every(color => expected.includes(color)));
       assert.equal(colors.get('1-0'), colors.get('3-0'));
+      assert.equal(colors.get('1-0'), expected[0]);
+      assert.equal(colors.get('1-1'), expected[1]);
+      assert.equal(colors.get('1-2'), expected[2]);
+      assert.equal(colors.get('2-1'), expected[3]);
+      assert.equal(colors.get('3-2'), expected[6 % expected.length]);
       assert.ok(new Set(colors.values()).size > 1);
       assert.equal(render(components, options), svg);
     }
@@ -37,26 +42,27 @@ test('category overrides take priority over presets and invalid palette names ar
       assert.equal(colors.get('Same category'), '#123456');
       assert.notEqual(colors.get('Auto'), '#123456');
     }
-    for (const palette of ['', 'unknown', '__proto__', null, []]) assert.throws(() => render([], { palette }), /palette must be/);
+    for (const palette of ['classic', '', 'unknown', '__proto__', null, []]) assert.throws(() => render([], { palette }), /palette must be/);
   }
 });
 
-test('automatic colors avoid equal circular and cross-ring neighbors, including wraparound', () => {
-  const components = [1, 2, 3].flatMap(ring => [0, 1, 2].map(index => ({ name: `${ring}-${index}`, ring })));
-  for (const render of [renderRingMosaic, renderPuzzleMosaic]) {
-    const colors = fills(render(components, { measureText: () => 50 }));
-    assert.equal(colors.size, 9);
-    for (const ring of [1, 2, 3]) for (const index of [0, 1, 2]) {
-      assert.notEqual(colors.get(`${ring}-${index}`), colors.get(`${ring}-${(index + 1) % 3}`));
-      if (ring < 3) {
-        assert.notEqual(colors.get(`${ring + 1}-${index}`), colors.get(`${ring}-${index}`));
-        assert.notEqual(colors.get(`${ring + 1}-${index}`), colors.get(`${ring}-${(index + 1) % 3}`));
-      }
-    }
+test('categories use the first palette colors in input order regardless of level or visualization', () => {
+  const components = [
+    { name: 'First category', ring: 2, categoryId: 'z' },
+    { name: 'Second category', ring: 1, categoryId: 'a' },
+    { name: 'Third category', ring: 2, categoryId: 'b' },
+    { name: 'Repeated category', ring: 1, categoryId: 'z' },
+  ];
+  for (const render of renderers) {
+    const colors = fills(render(components));
+    assert.equal(colors.get('First category'), '#FF9A4A');
+    assert.equal(colors.get('Second category'), '#1F4B6B');
+    assert.equal(colors.get('Third category'), '#CFD24F');
+    assert.equal(colors.get('Repeated category'), '#FF9A4A');
   }
 });
 
-test('automatic colors favor perceptual contrast while category overrides remain exact', () => {
+test('text contrast and explicit colors are preserved without shifting other palette slots', () => {
   for (const render of [renderRingMosaic, renderPuzzleMosaic]) {
     const automatic = render([{ name: 'A', ring: 1 }, { name: 'B', ring: 1 }, { name: 'C', ring: 1 }]);
     const textColors = new Set([...automatic.matchAll(/<text fill="([^"]+)"/g)].map(match => match[1]));
@@ -69,8 +75,8 @@ test('automatic colors favor perceptual contrast while category overrides remain
     ], { categoryColors: { pin: '#CF123C' } }));
     assert.equal(explicit.get('Fixed'), '#CF123C');
     assert.equal(explicit.get('Same category'), '#CF123C');
-    assert.notEqual(explicit.get('Auto').toLowerCase(), '#cf123c');
-    assert.notEqual(explicit.get('Outer auto').toLowerCase(), '#cf123c');
+    assert.equal(explicit.get('Auto'), '#1F4B6B');
+    assert.equal(explicit.get('Outer auto'), '#CFD24F');
   }
 });
 

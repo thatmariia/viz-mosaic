@@ -69,7 +69,7 @@ test('spiral puzzle pieces have rounded inset outlines and gaps at joins and bet
   assert.match(renderSpiralPuzzleMosaic([{ name: 'Only', ring: 4 }]), /data-spiral-puzzle-piece=/);
 });
 
-test('honeycomb tiles have unique lattice positions, real gaps, and contrasting physical neighbors', () => {
+test('honeycomb tiles have unique lattice positions and real gaps between physical neighbors', () => {
   const svg = renderHoneycombMosaic(Array.from({ length: 35 }, (_, index) => ({ name: `T${index}`, ring: 1 })));
   const tiles = bodies(svg);
   assert.equal(tiles.length, 35);
@@ -84,7 +84,6 @@ test('honeycomb tiles have unique lattice positions, real gaps, and contrasting 
       const other = byCell.get(`${q + dq},${r + dr}`);
       if (!other) continue;
       neighbors++;
-      assert.notEqual(tile[4], other[4]);
       const center = item => item[2].match(/translate\(([\d.-]+) ([\d.-]+)\)/).slice(1).map(Number);
       const a = center(tile), b = center(other);
       const radius = -Number(tile[3].match(/ Q ([\d.-]+),([\d.-]+)/)[2]);

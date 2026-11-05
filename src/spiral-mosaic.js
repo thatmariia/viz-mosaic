@@ -1,5 +1,5 @@
 import { prepareInput } from './input.js';
-import { assignColors, contrastColor } from './colors.js';
+import { contrastColor } from './colors.js';
 import { FONT_SIZE, LOGO_SIZE, GAP, number, escapeXML, createImages, svgDocument, shadowFilter } from './svg.js';
 import { PUZZLE_JOIN_REACH } from './puzzle-piece.js';
 import { spiralPuzzlePiece } from './spiral-puzzle-piece.js';
@@ -38,7 +38,7 @@ function geometry(base) {
 }
 
 export function renderSpiralLayout(components, options, puzzle = false) {
-  const { entries, colors, palette, centerLogo, title, idPrefix, monochromeLogos } = prepareInput(components, options, puzzle ? 'Spiral puzzle mosaic' : 'Spiral mosaic');
+  const { entries, centerLogo, title, idPrefix, monochromeLogos, legend } = prepareInput(components, options, puzzle ? 'Spiral puzzle mosaic' : 'Spiral mosaic');
   const rings = new Map();
   for (const entry of entries) {
     if (!rings.has(entry.ring)) rings.set(entry.ring, []);
@@ -61,20 +61,8 @@ export function renderSpiralLayout(components, options, puzzle = false) {
       return segment;
     }) };
   });
-  const segments = plans.flatMap(plan => plan.segments), neighbors = [];
+  const segments = plans.flatMap(plan => plan.segments);
   const connected = (a, b) => a && b && Math.abs(a.end - b.start) < 1e-8;
-  segments.forEach((segment, i) => { if (connected(segment, segments[i + 1])) neighbors.push([segment, segments[i + 1]]); });
-  for (const a of plans) for (const b of plans) {
-    if (b.ring < a.ring) continue;
-    const reach = puzzle ? PUZZLE_JOIN_REACH : BAND / 2;
-    const margin = reach / a.radius + reach / b.radius;
-    if (a.segments[0].start > b.segments.at(-1).end - TAU + margin || a.segments.at(-1).end < b.segments[0].start - TAU - margin) continue;
-    for (const first of a.segments) for (const second of b.segments) {
-      if (second.start <= first.start) continue;
-      if (first.start < second.end - TAU + margin && first.end > second.start - TAU - margin) neighbors.push([first, second]);
-    }
-  }
-  assignColors(plans, colors, 0, neighbors, palette);
   const spiral = geometry(base), defs = puzzle ? [] : [shadowFilter(idPrefix)], bodies = [], joins = [], labels = [];
   const images = createImages(defs, idPrefix, monochromeLogos);
   const cap = (t, color, filter = '') => {
@@ -115,7 +103,7 @@ export function renderSpiralLayout(components, options, puzzle = false) {
   const maxRing = Math.max(0, ...rings.keys());
   const extent = maxRing ? base + maxRing * levelAngle * SLOPE + BAND / 2 + 12 : 86;
   const inner = maxRing ? base + (Math.min(...rings.keys()) - 1) * levelAngle * SLOPE - BAND / 2 : 86;
-  return svgDocument(title, idPrefix, extent, defs, [...bodies, ...joins, ...labels, images.center(centerLogo, inner)]);
+  return svgDocument(title, idPrefix, extent, defs, [...bodies, ...joins, ...labels, images.center(centerLogo, inner)], FONT_SIZE, legend);
 }
 
 export function renderSpiralMosaic(components, options) {

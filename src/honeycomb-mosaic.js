@@ -1,11 +1,10 @@
 import { prepareInput } from './input.js';
-import { assignColors, contrastColor } from './colors.js';
+import { contrastColor } from './colors.js';
 import { FONT_SIZE, LOGO_SIZE, number, escapeXML, createImages, svgDocument } from './svg.js';
 
 const ROOT3 = Math.sqrt(3);
 const GAP = 6;
 const DIRECTIONS = [[1, 0], [0, 1], [-1, 1], [-1, 0], [0, -1], [1, -1]];
-const key = (q, r) => `${q},${r}`;
 const position = (q, r) => [ROOT3 * (q + r / 2), 1.5 * r];
 
 function shellCells(shell) {
@@ -33,7 +32,7 @@ function hexagon(radius) {
 }
 
 export function renderHoneycombMosaic(components, options) {
-  const { entries, colors, palette, centerLogo, title, idPrefix, monochromeLogos } = prepareInput(components, options, 'Honeycomb mosaic');
+  const { entries, centerLogo, title, idPrefix, monochromeLogos, legend } = prepareInput(components, options, 'Honeycomb mosaic');
   const ordered = [...entries].sort((a, b) => a.ring - b.ring || a.order - b.order);
   const radius = Math.max(56, ...entries.map(entry => (entry.width + 24) / ROOT3));
   const spacing = radius + GAP / ROOT3;
@@ -50,12 +49,6 @@ export function renderHoneycombMosaic(components, options) {
       tiles.push({ ...ordered[index++], ...cell, shell, x, y });
     }
   }
-  const cells = new Map(tiles.map(tile => [key(tile.q, tile.r), tile])), neighbors = [];
-  for (const tile of tiles) for (const [dq, dr] of DIRECTIONS.slice(0, 3)) {
-    const neighbor = cells.get(key(tile.q + dq, tile.r + dr));
-    if (neighbor) neighbors.push([tile, neighbor]);
-  }
-  assignColors([{ segments: tiles }], colors, 0, neighbors, palette);
   const { path, vertices } = hexagon(radius), defs = [], content = [];
   const images = createImages(defs, idPrefix, monochromeLogos);
   let inner = Infinity, extent = 0;
@@ -74,5 +67,5 @@ export function renderHoneycombMosaic(components, options) {
     });
   }
   content.push(images.center(centerLogo, tiles.length ? inner : 86));
-  return svgDocument(title, idPrefix, tiles.length ? extent + 12 : 86, defs, content);
+  return svgDocument(title, idPrefix, tiles.length ? extent + 12 : 86, defs, content, FONT_SIZE, legend);
 }

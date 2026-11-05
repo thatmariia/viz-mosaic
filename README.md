@@ -15,9 +15,11 @@ npm run demo
 
 Open <http://127.0.0.1:3000/demo/>. Set `PORT=3001` to use another port. Choose **Ring**, **Puzzle**, **Radial**, **Spiral**, **Spiral puzzle**, or **Honeycomb mosaic** above the editor; your components, colors, title, and images are preserved. Select **Packed rings** for the reference composition or **Skipped ring** to see positions 1, 2, and 4 with a logo-plus-name strip. Edit components, attach PNG/JPEG images, optionally set category colors, then select a format and choose **Download**. The download contains the diagram currently shown in the valid preview; invalid input disables downloading.
 
-The demo opens with a **Research software ecosystem** example using nine named tool logos and the ecosystem center logo. Three rings express an educated priority guess; automatic colors favor contrasting neighbors. The [source assessment and placement rationale](docs/research-software-example.md) explains the documented relationships and editorial choices.
+The demo opens with a **Research software ecosystem** example using nine named tool logos and the ecosystem center logo. Two levels distinguish deep integration (1) from lightweight integration (2). Categories group Tools, Workflows, Packaging, and Benchmarking. The [source assessment and placement rationale](docs/research-software-example.md) explains the documented relationships and editorial choices.
 
-The **Palette** selector offers Original, Palette 1 (six colors), and Palette 2 (ten colors), with swatches. The selected palette stays active when switching views or resetting examples. Custom category colors override it. In code, pass `{ palette: 'palette-1' }` or `{ palette: 'palette-2' }` to any renderer; automatic assignment continues to favor contrasting neighbors.
+The **Palette** selector offers Palette 1 (six colors, default) and Palette 2 (ten colors), with swatches. Colors follow palette order: three categories use the first three colors. The selected palette stays active when switching views or resetting examples. Custom category colors override it. In code, pass `{ palette: 'palette-1' }` or `{ palette: 'palette-2' }` to any renderer.
+
+Use **Show legend** to include or exclude the legend, and **Legend position** to place it above, right, below, or left of the diagram. It shows category colors and level names, stays outside the diagram, and is included in every download format when enabled.
 
 SVG preserves vector geometry and embedded images. PNG uses a transparent background; JPEG uses white. Browser raster exports use twice the SVG dimensions, capped at 4,096 pixels per side. The public renderer always returns SVG; raster conversion stays in the demo's browser code.
 
@@ -91,7 +93,7 @@ Use `renderSpiralPuzzleMosaic(components, options)` for the same expanding spira
 
 Use `renderHoneycombMosaic(components, options)` for rounded hexagonal tiles packed around the center logo. Lower `ring` values pack first, with input order preserved within a level. Here the level is a packing priority: multiple levels can share a physical hexagonal ring, and skipped values do not reserve empty cells. The original levels remain unchanged when switching views.
 
-Tiles fill the nearest available hexagonal rings, with any partial outer ring distributed around the center. All tiles grow together to fit the longest name. Six-unit transparent gaps come from the grid spacing; no separator strokes or masks are used. Logos sit above horizontal names, and the center logo fits the unoccupied middle cell. Automatic colors contrast across actual neighboring tiles. The maximum SVG half-extent is 8,192 units. The default title is `Honeycomb mosaic`; TypeScript aliases are `HoneycombMosaicComponent` and `HoneycombMosaicOptions`.
+Tiles fill the nearest available hexagonal rings, with any partial outer ring distributed around the center. All tiles grow together to fit the longest name. Six-unit transparent gaps come from the grid spacing; no separator strokes or masks are used. Logos sit above horizontal names, and the center logo fits the unoccupied middle cell. The maximum SVG half-extent is 8,192 units. The default title is `Honeycomb mosaic`; TypeScript aliases are `HoneycombMosaicComponent` and `HoneycombMosaicOptions`.
 
 ### Components
 
@@ -110,11 +112,24 @@ Tiles fill the nearest available hexagonal rings, with any partial outer ring di
 | `centerLogo` | Optional base64 PNG or JPEG data URL, centered and upright. |
 | `monochromeLogos` | Optional boolean, default `false`. Tint component marks to their label color and turn white details into transparent cutouts. The demo enables it. |
 | `categoryColors` | Optional object mapping category IDs to opaque `#rgb` or `#rrggbb` colors. |
-| `palette` | Automatic palette: `classic` (default), `palette-1` (6 colors), or `palette-2` (10 colors). Custom category colors take priority. |
+| `palette` | Automatic palette: `palette-1` (6 colors, default) or `palette-2` (10 colors). Custom category colors take priority. |
+| `legend` | Optional boolean, default `false`. Include category colors and occupied levels in the SVG. The demo enables it. |
+| `legendPosition` | `top`, `right`, `bottom` (default), or `left`. Expands the canvas to leave the diagram unobstructed. |
+| `levelLabels` | Optional object mapping numeric levels to readable labels, e.g. `{ 1: 'Deep integration', 2: 'Lightweight integration' }`. |
 | `idPrefix` | Optional stable ID prefix, starting with a letter and containing letters, digits, `_`, `.`, or `-`. Supply a **distinct prefix per inline diagram**. Defaults are unique per render. |
 | `measureText(name, fontSize)` | Optional callback returning a positive finite width in SVG pixels. Uses Arial, Helvetica, or sans-serif at weight 500. |
 
-Categories share colors across rings. A deterministic, greedy palette assignment first avoids identical neighbors, then favors perceptual color contrast with extra weight on lightness around each ring and across adjacent rings, including rounded overlap regions. Radial mosaic applies the same preference to neighboring rays; spiral uses connected pieces and neighboring windings; honeycomb uses adjacent grid cells. Unmapped category colors are chosen for the current layout. Explicit `categoryColors` stay exact; shared categories or fixed overrides can require repeated neighbors. Shadows and transparent spacing retain separation in those cases. Text switches between dark and white according to the fill color.
+Categories receive colors in the order they first appear in the input, before any layout sorting. Repeated categories share a color across levels and views. Each component without a category receives its own palette slot. Colors repeat after the palette is exhausted; explicit `categoryColors` overrides keep their slot so other categories do not shift. Text switches between dark and white according to the fill color.
+
+Legends use category IDs as labels, or component names when no category is given. Level labels default to `Level 1`, `Level 2`, etc.; custom labels include the level number. Long legend labels wrap. An empty diagram has no legend. For example:
+
+```js
+const svg = renderRingMosaic(components, {
+  legend: true,
+  legendPosition: 'right',
+  levelLabels: { 1: 'Deep integration', 2: 'Lightweight integration' },
+});
+```
 
 The result is a complete responsive SVG string, with its own styles, scoped IDs, accessibility name, and embedded images. An empty component array produces a small, accessible empty canvas, optionally with a center logo. Inputs are never mutated.
 

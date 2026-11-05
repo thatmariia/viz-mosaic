@@ -1,5 +1,5 @@
 import { PUZZLE_GAP, PUZZLE_JOIN_REACH, puzzlePiece } from './puzzle-piece.js';
-import { assignColors, contrastColor } from './colors.js';
+import { contrastColor } from './colors.js';
 import { FONT_SIZE, LOGO_SIZE, GAP, number, escapeXML as escape, createImages, svgDocument, shadowFilter } from './svg.js';
 import { prepareInput } from './input.js';
 import { RADIAL_FONT_SIZE, renderRadialLayout } from './radial-layout.js';
@@ -22,7 +22,7 @@ function sector(radius, start, end, band) {
 export function renderCircularMosaic(components, options = {}, style) {
   const puzzle = style === 'puzzle';
   const band = puzzle ? 64 : 52;
-  const { entries, colors, palette, centerLogo, title, idPrefix } = prepareInput(components, options, style === 'radial' ? 'Radial mosaic' : puzzle ? 'Puzzle mosaic' : 'Ring mosaic', style === 'radial' ? RADIAL_FONT_SIZE : FONT_SIZE);
+  const { entries, centerLogo, title, idPrefix, legend } = prepareInput(components, options, style === 'radial' ? 'Radial mosaic' : puzzle ? 'Puzzle mosaic' : 'Ring mosaic', style === 'radial' ? RADIAL_FONT_SIZE : FONT_SIZE);
   const rings = new Map();
   for (const entry of entries) {
     if (!rings.has(entry.ring)) rings.set(entry.ring, []);
@@ -31,7 +31,7 @@ export function renderCircularMosaic(components, options = {}, style) {
 
   if (style === 'radial') {
     const entries = [...rings.values()].flat().sort((a, b) => a.order - b.order);
-    return renderRadialLayout(entries, { colors, palette, centerLogo, title, idPrefix, monochromeLogos: options.monochromeLogos });
+    return renderRadialLayout(entries, { centerLogo, title, idPrefix, legend, monochromeLogos: options.monochromeLogos });
   }
 
   // Grow the center clearance, keeping pitch and the user's distance indices intact.
@@ -65,7 +65,6 @@ export function renderCircularMosaic(components, options = {}, style) {
     });
     return { ring, radius, offset, segments };
   });
-  assignColors(plans, colors, Math.max(band / 2, puzzle ? PUZZLE_JOIN_REACH : 0), undefined, palette);
   for (const { ring, radius, offset, segments } of plans) {
     const bases = [];
     const joins = [];
@@ -114,5 +113,5 @@ export function renderCircularMosaic(components, options = {}, style) {
     const innerRadius = maxRing ? firstRadius + (Math.min(...rings.keys()) - 1) * band - band / 2 : extent;
     content.push(images.center(centerLogo, innerRadius));
   }
-  return svgDocument(title, idPrefix, extent, defs, content);
+  return svgDocument(title, idPrefix, extent, defs, content, FONT_SIZE, legend);
 }

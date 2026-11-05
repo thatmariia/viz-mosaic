@@ -1,11 +1,11 @@
+import { number, escapeXML } from './format.js';
+import { layoutLegend } from './legend.js';
+export { number, escapeXML };
+
 export const FONT_SIZE = 16;
 export const FONT = 'Arial, Helvetica, sans-serif';
 export const LOGO_SIZE = 28;
 export const GAP = 10;
-export const number = value => Number(value.toFixed(4));
-export const escapeXML = value => String(value).replace(/[&<>"']/g, c => ({
-  '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;',
-})[c]);
 
 export function createImages(defs, prefix, monochrome) {
   const filters = new Set();
@@ -32,8 +32,9 @@ export function createImages(defs, prefix, monochrome) {
   };
 }
 
-export function svgDocument(title, prefix, extent, defs, content, fontSize = FONT_SIZE) {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${number(-extent)} ${number(-extent)} ${number(extent * 2)} ${number(extent * 2)}" role="img" aria-labelledby="${prefix}-title" font-family="${FONT}" font-size="${fontSize}" font-weight="500"><title id="${prefix}-title">${escapeXML(title)}</title><defs>${defs.join('')}</defs>${content.join('')}</svg>`;
+export function svgDocument(title, prefix, extent, defs, content, fontSize = FONT_SIZE, legend) {
+  const layout = layoutLegend(extent, fontSize, legend);
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${layout.viewBox.map(number).join(' ')}" role="img" aria-labelledby="${prefix}-title" font-family="${FONT}" font-size="${fontSize}" font-weight="500"><title id="${prefix}-title">${escapeXML(title)}</title><defs>${defs.join('')}</defs>${content.join('')}${layout.content}</svg>`;
 }
 
 export function shadowFilter(prefix) {

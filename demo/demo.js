@@ -17,6 +17,7 @@ let nextId = 0;
 let components = [];
 let categoryColors = [];
 let centerLogo;
+let levelLabels = {};
 let svg = '';
 let visualization = 'ring';
 let exampleRevision = 0;
@@ -70,6 +71,9 @@ function render() {
       monochromeLogos: true,
       categoryColors: colors,
       palette: $('#palette').value,
+      legend: $('#show-legend').checked,
+      legendPosition: $('#legend-position').value,
+      levelLabels,
       idPrefix: 'preview',
       measureText: (name, fontSize) => {
         context.font = `500 ${fontSize}px Arial, Helvetica, sans-serif`;
@@ -162,10 +166,7 @@ async function reset() {
     ['Delivery queue', 3, 'quality'], ['Access control', 3, 'data'], ['Trace index', 3, 'compute'], ['File intake', 3, 'transform'], ['Code lookup', 3, 'quality'], ['ID matching', 3, 'data'], ['Retry policy', 3, 'transform'],
     ['Key rotation', 4, 'services'], ['Dashboards', 4, 'control'], ['Event intake', 4, 'integration'], ['Terminology', 4, 'services'], ['Deduplication', 4, 'control'], ['Acknowledgment', 4, 'integration'], ['Encryption', 4, 'services'], ['Monitoring', 4, 'control'],
   ].map(([name, ring, categoryId], index) => ({ name, ring, categoryId, ...(index === 0 ? { logo: componentLogo } : {}) }));
-  let example = { components: selected === 'skipped' ? skipped : packed, title: 'Atlas research platform', centerLogo: systemLogo, categoryColors: [
-    { id: 'data', color: '#cf123c' }, { id: 'transform', color: '#ffd43b' }, { id: 'quality', color: '#f2a1c4' },
-    { id: 'compute', color: '#ff9c2c' }, { id: 'services', color: '#0653c4' }, { id: 'control', color: '#006b50' }, { id: 'integration', color: '#54389b' },
-  ] };
+  let example = { components: selected === 'skipped' ? skipped : packed, title: 'Atlas research platform', centerLogo: systemLogo, categoryColors: [] };
   exampleLoading = true;
   $('#preview').setAttribute('aria-busy', 'true');
   $('#download').disabled = true;
@@ -183,6 +184,7 @@ async function reset() {
   components = example.components.map(component => ({ ...component, id: String(++nextId) }));
   categoryColors = example.categoryColors.map(entry => ({ ...entry, key: String(++nextId) }));
   centerLogo = example.centerLogo;
+  levelLabels = example.levelLabels ?? {};
   $('#title').value = example.title;
   $('#example-note').hidden = selected !== 'research';
   $('#center-logo').value = '';
@@ -243,7 +245,7 @@ $('#colors').addEventListener('click', event => {
   render();
 });
 $('#add-color').addEventListener('click', () => {
-  categoryColors.push({ key: String(++nextId), id: '', color: '#426a5a' });
+  categoryColors.push({ key: String(++nextId), id: '', color: PALETTES[$('#palette').value][0] });
   renderColors();
   render();
   $('#colors .color-row:last-child input').focus();
@@ -251,6 +253,8 @@ $('#add-color').addEventListener('click', () => {
 
 $('#title').addEventListener('input', render);
 $('#palette').addEventListener('change', () => { renderPalette(); render(); });
+$('#show-legend').addEventListener('change', () => { $('#legend-position').disabled = !$('#show-legend').checked; render(); });
+$('#legend-position').addEventListener('change', render);
 $('.visualizations').addEventListener('click', event => {
   const button = event.target.closest('[data-visualization]');
   if (!button) return;
