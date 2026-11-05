@@ -5,6 +5,7 @@ import { renderRadialMosaic, renderRingMosaic } from '../src/index.js';
 const png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==';
 const pieces = svg => [...svg.matchAll(/<g data-component="([^"]+)"[^>]+>(.*?)<\/g>/g)];
 const reach = piece => Number(piece[0].match(/data-radius="([\d.]+)"/)[1]);
+const attribute = (text, name) => Number(text.match(new RegExp(`${name}="([^"]+)"`))[1]);
 
 test('radial mosaic keeps global input order and uses distance indices for outward reach', () => {
   const components = Object.freeze([4, 1, 2].map((ring, index) => Object.freeze({ name: `Tool ${index}`, ring })));
@@ -27,7 +28,7 @@ test('radial rays grow for density and labels while retaining transparent space 
   const rays = pieces(svg);
   const outer = reach(rays[0]);
   assert.equal(rays.length, count);
-  assert.ok(2 * outer * Math.sin(Math.PI / count) > 2 * 80 + 6, 'Rounded ends must remain separated.');
+  assert.ok(2 * outer * Math.sin(Math.PI / count) - 2 * 80 > 5.99, 'Rounded ends must remain separated.');
   assert.match(rays[0][2], / A 80 80 0 1 1 /);
   assert.match(rays[0][2], / A 4 4 0 0 1 /);
   const roomy = renderRadialMosaic(Array.from({ length: 9 }, (_, index) => ({ name: `Tool ${index}`, ring: 1 })));
@@ -37,6 +38,29 @@ test('radial rays grow for density and labels while retaining transparent space 
   assert.ok(reach(long[0]) > reach(short[0]));
   assert.throws(() => renderRadialMosaic([{ name: 'Long', ring: 1 }], { measureText: () => 10000 }), /capacity.*Shorten names/);
   assert.throws(() => renderRadialMosaic(Array.from({ length: 300 }, () => ({ name: 'A', ring: 1 }))), /capacity/);
+});
+
+test('radial facing edges stay parallel with a constant gap for different reaches', () => {
+  for (const count of [3, 9, 24, 70]) {
+    const rays = pieces(renderRadialMosaic(Array.from({ length: count }, (_, index) => ({ name: `T${index}`, ring: index % 3 + 1 }))));
+    const rotate = ([x, y], angle) => [x * Math.cos(angle) - y * Math.sin(angle), x * Math.sin(angle) + y * Math.cos(angle)];
+    const edge = (ray, index, lower) => {
+      const points = [...ray[2].matchAll(/[ML] ([\d.-]+) ([\d.-]+)/g)].slice(0, 2).map(match => [Number(match[1]), Number(match[2]) * (lower ? -1 : 1)]);
+      return points.map(point => rotate(point, -Math.PI / 2 + index * Math.PI * 2 / count));
+    };
+    const gaps = [];
+    rays.forEach((ray, index) => {
+      const [a, b] = edge(ray, index, true), next = (index + 1) % count;
+      const [c, d] = edge(rays[next], next, false);
+      const u = [b[0] - a[0], b[1] - a[1]], v = [d[0] - c[0], d[1] - c[1]];
+      assert.ok(Math.abs(u[0] * v[1] - u[1] * v[0]) / Math.hypot(...u) / Math.hypot(...v) < 0.00001);
+      gaps.push(Math.abs(u[0] * (c[1] - a[1]) - u[1] * (c[0] - a[0])) / Math.hypot(...u));
+    });
+    assert.ok(Math.min(...gaps) > 5.99);
+    assert.ok(Math.max(...gaps) - Math.min(...gaps) < 0.001);
+    const caps = rays.map(ray => Number(ray[2].match(/ A ([\d.]+) [\d.]+ 0 1 1/)[1]));
+    assert.ok(caps[2] > caps[1] && caps[1] > caps[0]);
+  }
 });
 
 test('radial logos face with readable labels and the upright center fits the open space', () => {
@@ -53,6 +77,8 @@ test('radial logos face with readable labels and the upright center fits the ope
     assert.match(ray[2], /fill="#abc"/);
     assert.match(ray[2], /fill="#182323"/);
     assert.ok(Number(ray[2].match(/<image[^>]+width="([\d.]+)"/)[1]) >= 56);
+    const image = ray[2].match(/<image[^>]+/)[0];
+    assert.ok(Math.abs(attribute(image, 'x') + attribute(image, 'width') / 2 - reach(ray)) < 0.0001);
     const flip = ray[2].match(/<text[^>]*rotate\((\d+)\)/)[1];
     assert.match(ray[2], new RegExp(`<image[^>]*rotate\\(${flip} `));
   }

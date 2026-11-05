@@ -52,13 +52,21 @@ export function renderRadialMosaic(
   options?: RadialMosaicOptions,
 ): string;
 
-/** Each distance index occupies a half-turn; skipped indices remain empty. */
+/** Levels occupy spiral sections; more than three components make at least two turns. Skipped indices remain empty. */
 export type SpiralMosaicComponent = RingMosaicComponent;
 /** Same options; default title is "Spiral mosaic". */
 export type SpiralMosaicOptions = RingMosaicOptions;
 export function renderSpiralMosaic(
   components: readonly SpiralMosaicComponent[],
   options?: SpiralMosaicOptions,
+): string;
+
+export type SpiralPuzzleMosaicComponent = SpiralMosaicComponent;
+/** Spiral layout with rounded puzzle connections; default title is "Spiral puzzle mosaic". */
+export type SpiralPuzzleMosaicOptions = SpiralMosaicOptions;
+export function renderSpiralPuzzleMosaic(
+  components: readonly SpiralPuzzleMosaicComponent[],
+  options?: SpiralPuzzleMosaicOptions,
 ): string;
 
 /** Lower ring values pack first; empty level numbers do not reserve cells. */

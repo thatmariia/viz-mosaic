@@ -31,16 +31,17 @@ const CONNECTION = [
 
 // Neighbors share the same flowing boundary, traced in opposite directions.
 // A single rounded lobe keeps connections simple; mirrored joins vary direction.
-function edgeCurves(radius, angle, variant, reverse = false) {
-  const position = ([radial, tangent]) => {
-    const bend = tangent * (variant % 2 ? -1 : 1);
-    const x = (radius + radial) * Math.cos(angle) - bend * Math.sin(angle);
-    const y = (radius + radial) * Math.sin(angle) + bend * Math.cos(angle);
-    return [x, y];
-  };
+export function puzzleEdgeCurves(position, variant, reverse = false) {
   const curves = CONNECTION.map(curve => curve.slice());
   if (reverse) curves.reverse().forEach(curve => curve.reverse());
-  return curves.map(curve => curve.map(position));
+  return curves.map(curve => curve.map(([radial, tangent]) => position(radial, tangent * (variant % 2 ? -1 : 1))));
+}
+
+function edgeCurves(radius, angle, variant, reverse = false) {
+  return puzzleEdgeCurves((radial, tangent) => [
+    (radius + radial) * Math.cos(angle) - tangent * Math.sin(angle),
+    (radius + radial) * Math.sin(angle) + tangent * Math.cos(angle),
+  ], variant, reverse);
 }
 
 function visibleMiddle(outline, radius, nominal) {

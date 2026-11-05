@@ -1,13 +1,14 @@
-import { renderRingMosaic, renderPuzzleMosaic, renderRadialMosaic, renderSpiralMosaic, renderHoneycombMosaic } from '../src/index.js';
+import { renderRingMosaic, renderPuzzleMosaic, renderRadialMosaic, renderSpiralMosaic, renderHoneycombMosaic, renderSpiralPuzzleMosaic } from '../src/index.js';
 import { downloadDiagram } from './download.js';
 import { researchSoftwareExample } from './research-software.js';
 
 const $ = selector => document.querySelector(selector);
-const renderers = { ring: renderRingMosaic, puzzle: renderPuzzleMosaic, radial: renderRadialMosaic, spiral: renderSpiralMosaic, honeycomb: renderHoneycombMosaic };
+const renderers = { ring: renderRingMosaic, puzzle: renderPuzzleMosaic, radial: renderRadialMosaic, spiral: renderSpiralMosaic, honeycomb: renderHoneycombMosaic, 'spiral-puzzle': renderSpiralPuzzleMosaic };
 const standardPlacement = { label: 'Ring', hint: 'Ring 1 is closest to the center. Skipped rings stay empty.', summary: 'occupied rings' };
 const placements = {
   radial: { label: 'Reach', hint: 'Reach 1 is shortest. Higher values extend farther from the center.', summary: 'reach levels' },
-  spiral: { label: 'Level', hint: 'Each level occupies a half-turn, starting near the center. Skipped levels stay empty.', summary: 'distance levels' },
+  spiral: { label: 'Level', hint: 'Lower levels start near the center. More than 3 components make at least 2 turns; skipped levels stay empty.', summary: 'distance levels' },
+  'spiral-puzzle': { label: 'Level', hint: 'Lower levels start near the center. More than 3 components make at least 2 turns; skipped levels stay empty.', summary: 'distance levels' },
   honeycomb: { label: 'Level', hint: 'Lower levels pack first, closest to the center. Tiles pack tightly without reserving empty levels.', summary: 'priority levels' },
 };
 const placement = () => placements[visualization] ?? standardPlacement;

@@ -8,9 +8,10 @@ const radius = svg => Number(svg.match(/data-radius="([\d.]+)"/)[1]);
 test('ring indices remain distances, including when only ring 4 is occupied', () => {
   const svg = renderRingMosaic([1, 2, 4].map(ring => ({ name: `Ring ${ring}`, ring })));
   assert.deepEqual([...svg.matchAll(/data-ring="(\d+)"/g)].map(match => Number(match[1])), [1, 2, 4]);
-  assert.deepEqual([...svg.matchAll(/data-radius="([\d.]+)"/g)].map(match => Number(match[1])), [88, 152, 280]);
-  assert.equal(radius(renderRingMosaic([{ name: 'Outer', ring: 4 }])), 280);
-  assert.match(svg, /<circle r="280"/);
+  assert.deepEqual([...svg.matchAll(/data-radius="([\d.]+)"/g)].map(match => Number(match[1])), [88, 140, 244]);
+  assert.equal(radius(renderRingMosaic([{ name: 'Outer', ring: 4 }])), 244);
+  assert.match(svg, /<circle r="244"/);
+  assert.match(svg, /stroke-width="52"/);
 });
 
 test('groups rings in distance order and preserves component order inside each ring', () => {
@@ -103,7 +104,7 @@ test('center logos grow with available space and fit inside the nearest occupied
       const svg = render(components, { centerLogo: png });
       const image = svg.match(/<image[^>]+x="([\d.-]+)" y="([\d.-]+)" width="([\d.]+)" height="([\d.]+)"/);
       const [x, y, width, height] = image.slice(1).map(Number);
-      const inner = components.length ? radius(svg) - 32 : 86;
+      const inner = components.length ? radius(svg) - (render === renderRingMosaic ? 26 : 32) : 86;
       assert.ok(width * Math.SQRT2 / 2 <= inner - 12 + 0.001);
       assert.ok(Math.abs(x + width / 2) < 0.001 && Math.abs(y + height / 2) < 0.001);
       assert.equal(width, height);

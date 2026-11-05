@@ -16,7 +16,7 @@ test('packed package installs offline and exposes the public import and declarat
     assert.ok(!pack.files.some(file => file.path.startsWith('test/')));
     execFileSync('npm', ['install', join(temporary, pack.filename), '--prefix', temporary, '--offline', '--ignore-scripts', '--no-audit', '--no-fund', '--cache', cache], { encoding: 'utf8' });
     const svgs = JSON.parse(execFileSync(process.execPath, ['--input-type=module', '-e', "import * as renderers from 'viz-mosaic'; console.log(JSON.stringify(Object.values(renderers).map(render=>render([{name:'Consumer',ring:4,categoryId:1}],{categoryColors:{1:'#abc'}}))));"], { cwd: temporary, encoding: 'utf8' }));
-    assert.equal(svgs.length, 5);
+    assert.equal(svgs.length, 6);
     for (const svg of svgs) {
       assert.match(svg, /data-ring="4"/);
       assert.match(svg, /(?:stroke|fill)="#abc"/);
@@ -26,6 +26,7 @@ test('packed package installs offline and exposes the public import and declarat
     assert.match(declaration, /export function renderPuzzleMosaic/);
     assert.match(declaration, /export function renderRadialMosaic/);
     assert.match(declaration, /export function renderSpiralMosaic/);
+    assert.match(declaration, /export function renderSpiralPuzzleMosaic/);
     assert.match(declaration, /export function renderHoneycombMosaic/);
   } finally {
     rmSync(temporary, { recursive: true, force: true });

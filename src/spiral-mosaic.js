@@ -1,6 +1,8 @@
 import { prepareInput } from './input.js';
 import { assignColors, contrastColor } from './colors.js';
 import { FONT_SIZE, LOGO_SIZE, GAP, number, escapeXML, createImages, svgDocument, shadowFilter } from './svg.js';
+import { PUZZLE_JOIN_REACH } from './puzzle-piece.js';
+import { spiralPuzzlePiece } from './spiral-puzzle-piece.js';
 
 const TAU = Math.PI * 2;
 const BAND = 64;
@@ -29,28 +31,30 @@ function geometry(base) {
     return Array.from({ length: count + 1 }, (_, i) => at(start + (end - start) * i / count, offset).point);
   }
   return {
-    at, advance, length: (start, end) => integral(end) - integral(start),
+    at, advance, samples, length: (start, end) => integral(end) - integral(start),
     curve: (start, end, offset = 0) => path(samples(start, end, offset)),
     strip: (start, end) => `${path([...samples(start, end, -BAND / 2), ...samples(end, start, BAND / 2)])} Z`,
   };
 }
 
-export function renderSpiralMosaic(components, options) {
-  const { entries, colors, centerLogo, title, idPrefix, monochromeLogos } = prepareInput(components, options, 'Spiral mosaic');
+export function renderSpiralLayout(components, options, puzzle = false) {
+  const { entries, colors, centerLogo, title, idPrefix, monochromeLogos } = prepareInput(components, options, puzzle ? 'Spiral puzzle mosaic' : 'Spiral mosaic');
   const rings = new Map();
   for (const entry of entries) {
     if (!rings.has(entry.ring)) rings.set(entry.ring, []);
-    rings.get(entry.ring).push({ ...entry, needed: entry.groupWidth + BAND + 16 });
+    rings.get(entry.ring).push({ ...entry, needed: entry.groupWidth + (puzzle ? PUZZLE_JOIN_REACH * 2 + 24 : BAND + 16) });
   }
+  // Stretch occupied levels together to give larger mosaics at least two turns.
+  const levelAngle = Math.PI * (entries.length > 3 ? Math.max(1, 4 / rings.size) : 1);
   let base = 104;
   for (const [ring, items] of rings) {
-    base = Math.max(base, items.reduce((sum, entry) => sum + entry.needed, 0) / Math.PI - (ring - 1) * Math.PI * SLOPE);
+    base = Math.max(base, items.reduce((sum, entry) => sum + entry.needed, 0) / levelAngle - (ring - 1) * levelAngle * SLOPE);
     if (base > 4096) throw new RangeError(`Spiral level ${ring} cannot fit within the 4096px base-radius capacity. Shorten names or use fewer components.`);
   }
   const plans = [...rings].sort(([a], [b]) => a - b).map(([ring, items]) => {
-    const radius = base + (ring - 1) * Math.PI * SLOPE;
-    const extra = (Math.PI - items.reduce((sum, entry) => sum + entry.needed / radius, 0)) / items.length;
-    let t = (ring - 1) * Math.PI;
+    const radius = base + (ring - 1) * levelAngle * SLOPE;
+    const extra = (levelAngle - items.reduce((sum, entry) => sum + entry.needed / radius, 0)) / items.length;
+    let t = (ring - 1) * levelAngle;
     return { ring, radius, segments: items.map(entry => {
       const segment = { ...entry, start: t, end: t + entry.needed / radius + extra };
       t = segment.end;
@@ -61,14 +65,17 @@ export function renderSpiralMosaic(components, options) {
   const connected = (a, b) => a && b && Math.abs(a.end - b.start) < 1e-8;
   segments.forEach((segment, i) => { if (connected(segment, segments[i + 1])) neighbors.push([segment, segments[i + 1]]); });
   for (const a of plans) for (const b of plans) {
-    if (b.ring <= a.ring || b.ring > a.ring + 3) continue;
-    const margin = BAND / 2 / a.radius + BAND / 2 / b.radius;
+    if (b.ring < a.ring) continue;
+    const reach = puzzle ? PUZZLE_JOIN_REACH : BAND / 2;
+    const margin = reach / a.radius + reach / b.radius;
+    if (a.segments[0].start > b.segments.at(-1).end - TAU + margin || a.segments.at(-1).end < b.segments[0].start - TAU - margin) continue;
     for (const first of a.segments) for (const second of b.segments) {
+      if (second.start <= first.start) continue;
       if (first.start < second.end - TAU + margin && first.end > second.start - TAU - margin) neighbors.push([first, second]);
     }
   }
   assignColors(plans, colors, 0, neighbors);
-  const spiral = geometry(base), defs = [shadowFilter(idPrefix)], bodies = [], joins = [], labels = [];
+  const spiral = geometry(base), defs = puzzle ? [] : [shadowFilter(idPrefix)], bodies = [], joins = [], labels = [];
   const images = createImages(defs, idPrefix, monochromeLogos);
   const cap = (t, color, filter = '') => {
     const [x, y] = spiral.at(t).point.map(number);
@@ -78,17 +85,20 @@ export function renderSpiralMosaic(components, options) {
     const { name, ring, categoryId, color, logo, width, start, end } = segment;
     const id = `${idPrefix}-s${i}`, textColor = contrastColor(color);
     const category = categoryId === undefined ? '' : ` data-category-id="${escapeXML(categoryId)}"`;
-    const outline = spiral.strip(start, end);
-    bodies.push(`<g data-component="${escapeXML(name)}" data-ring="${ring}" data-start="${number(start)}" data-end="${number(end)}"${category}><path d="${outline}" fill="${color}"/></g>`);
-    if (!connected(segments[i - 1], segment)) bodies.push(cap(start, color));
+    const previous = segments[i - 1];
     const next = segments[i + 1];
-    if (connected(segment, next)) {
-      defs.push(`<clipPath id="${id}-join"><path d="${spiral.strip(next.start, next.end)}"/></clipPath>`);
-      joins.push(`<g data-spiral-join="" clip-path="url(#${id}-join)">${cap(end, color, ` filter="url(#${idPrefix}-shadow)"`)}</g>`);
+    const piece = puzzle ? spiralPuzzlePiece(spiral, start, end, connected(previous, segment) ? i : undefined, connected(segment, next) ? i + 1 : undefined) : undefined;
+    bodies.push(`<g data-component="${escapeXML(name)}" data-ring="${ring}" data-start="${number(start)}" data-end="${number(end)}"${category}><path${puzzle ? ' data-spiral-puzzle-piece=""' : ''} d="${piece ? piece.path : spiral.strip(start, end)}" fill="${color}"/></g>`);
+    if (!puzzle) {
+      if (!connected(previous, segment)) bodies.push(cap(start, color));
+      if (connected(segment, next)) {
+        defs.push(`<clipPath id="${id}-join"><path d="${spiral.strip(next.start, next.end)}"/></clipPath>`);
+        joins.push(`<g data-spiral-join="" clip-path="url(#${id}-join)">${cap(end, color, ` filter="url(#${idPrefix}-shadow)"`)}</g>`);
+      }
+      joins.push(cap(end, color));
     }
-    joins.push(cap(end, color));
     const length = spiral.length(start, end);
-    const middle = spiral.advance(start, length / 2 + (connected(segments[i - 1], segment) ? BAND / 2 : 0));
+    const middle = piece ? piece.middle : spiral.advance(start, length / 2 + (connected(previous, segment) ? BAND / 2 : 0));
     const direction = Math.cos(spiral.at(middle).tangent) < 0 ? -1 : 1;
     const textMiddle = spiral.advance(middle, direction * (logo ? (LOGO_SIZE + GAP) / 2 : 0));
     const half = width / 2 + 16;
@@ -103,7 +113,11 @@ export function renderSpiralMosaic(components, options) {
     labels.push(`<g data-label-for="${escapeXML(name)}">${image}<text fill="${textColor}" text-anchor="middle" xml:space="preserve"><textPath href="#${id}-label" startOffset="50%">${escapeXML(name)}</textPath></text></g>`);
   });
   const maxRing = Math.max(0, ...rings.keys());
-  const extent = maxRing ? base + maxRing * Math.PI * SLOPE + BAND / 2 + 12 : 86;
-  const inner = maxRing ? base + (Math.min(...rings.keys()) - 1) * Math.PI * SLOPE - BAND / 2 : 86;
+  const extent = maxRing ? base + maxRing * levelAngle * SLOPE + BAND / 2 + 12 : 86;
+  const inner = maxRing ? base + (Math.min(...rings.keys()) - 1) * levelAngle * SLOPE - BAND / 2 : 86;
   return svgDocument(title, idPrefix, extent, defs, [...bodies, ...joins, ...labels, images.center(centerLogo, inner)]);
+}
+
+export function renderSpiralMosaic(components, options) {
+  return renderSpiralLayout(components, options);
 }
