@@ -81,10 +81,19 @@ test('both logos are embedded without network resources', () => {
   const svg = renderRingMosaic([{ name: 'Logo', ring: 1, logo: png }], { centerLogo: png });
   assert.equal((svg.match(/<image href="data:image\/png;base64,/g) || []).length, 2);
   assert.match(svg, /xmlns="http:\/\/www.w3.org\/2000\/svg"/);
-  assert.doesNotMatch(svg, /<image[^>]+transform=/);
+  assert.equal((svg.match(/<image[^>]+transform="rotate\(/g) || []).length, 1);
   for (const logo of ['https://example.org/logo.png', 'data:image/svg+xml;base64,PHN2Zy8+', 'data:image/png;base64,YmFk', png.slice(0, -1)]) {
     assert.throws(() => renderRingMosaic([{ name: 'Logo', ring: 1, logo }]), /Component 1 logo/);
   }
+});
+
+test('component logos follow the label tangent on both halves while the center stays upright', () => {
+  const svg = renderRingMosaic(['North', 'South', 'West', 'East'].map(name => ({ name, ring: 2, logo: png })), { centerLogo: png });
+  const rotations = [...svg.matchAll(/transform="rotate\(([-\d.]+)/g)].map(match => Number(match[1]));
+  assert.equal(rotations.length, 4);
+  assert.ok(rotations.some(angle => Math.abs(angle) > 20));
+  assert.match(svg, /A [\d.]+ [\d.]+ 0 [01] 0 /);
+  assert.match(svg, /<image[^>]+x="-24" y="-24" width="48" height="48" preserveAspectRatio=/);
 });
 
 test('measurement callback receives font size, changes layout and must return usable widths', () => {

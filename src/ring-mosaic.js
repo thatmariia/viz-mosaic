@@ -164,8 +164,10 @@ export function renderRingMosaic(components, options = {}) {
       defs.push(`<path id="${id}-label" d="${arc(baseline, textAngle - direction * Math.PI / 2, textAngle + direction * Math.PI / 2, direction)}"/>`);
       let image = '';
       if (logo) {
-        const [x, y] = point(radius, middle - direction * (width + GAP) / (2 * radius));
-        image = `<image href="${escape(logo)}" x="${number(x - LOGO_SIZE / 2)}" y="${number(y - LOGO_SIZE / 2)}" width="${LOGO_SIZE}" height="${LOGO_SIZE}" preserveAspectRatio="xMidYMid meet"/>`;
+        const logoAngle = middle - direction * (width + GAP) / (2 * radius);
+        const [x, y] = point(radius, logoAngle);
+        const rotation = number((logoAngle + direction * Math.PI / 2) * 180 / Math.PI);
+        image = `<image href="${escape(logo)}" x="${number(x - LOGO_SIZE / 2)}" y="${number(y - LOGO_SIZE / 2)}" width="${LOGO_SIZE}" height="${LOGO_SIZE}" transform="rotate(${rotation} ${x} ${y})" preserveAspectRatio="xMidYMid meet"/>`;
       }
       labels.push(`<g>${image}<text fill="${contrastColor(color)}" text-anchor="middle" xml:space="preserve"><textPath href="#${id}-label" startOffset="50%">${escape(name)}</textPath></text></g>`);
     });
