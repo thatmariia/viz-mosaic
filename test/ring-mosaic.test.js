@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { renderRingMosaic } from '../src/index.js';
+import { renderRingMosaic, renderPuzzleMosaic } from '../src/index.js';
 
 const png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==';
 const radius = svg => Number(svg.match(/data-radius="([\d.]+)"/)[1]);
@@ -93,7 +93,38 @@ test('component logos follow the label tangent on both halves while the center s
   assert.equal(rotations.length, 4);
   assert.ok(rotations.some(angle => Math.abs(angle) > 20));
   assert.match(svg, /A [\d.]+ [\d.]+ 0 [01] 0 /);
-  assert.match(svg, /<image[^>]+x="-24" y="-24" width="48" height="48" preserveAspectRatio=/);
+  assert.match(svg, /<image[^>]+x="-[\d.]+" y="-[\d.]+" width="[\d.]+" height="[\d.]+" preserveAspectRatio=/);
+});
+
+test('center logos grow with available space and fit inside the nearest occupied ring', () => {
+  for (const render of [renderRingMosaic, renderPuzzleMosaic]) {
+    const sizes = [];
+    for (const components of [[{ name: 'Inner', ring: 1 }], [{ name: 'Outer', ring: 4 }], Array.from({ length: 30 }, (_, i) => ({ name: `Dense ${i}`, ring: 1 })), []]) {
+      const svg = render(components, { centerLogo: png });
+      const image = svg.match(/<image[^>]+x="([\d.-]+)" y="([\d.-]+)" width="([\d.]+)" height="([\d.]+)"/);
+      const [x, y, width, height] = image.slice(1).map(Number);
+      const inner = components.length ? radius(svg) - 32 : 86;
+      assert.ok(width * Math.SQRT2 / 2 <= inner - 12 + 0.001);
+      assert.ok(Math.abs(x + width / 2) < 0.001 && Math.abs(y + height / 2) < 0.001);
+      assert.equal(width, height);
+      sizes.push(width);
+    }
+    assert.ok(sizes[1] > sizes[0] && sizes[2] > sizes[0]);
+  }
+});
+
+test('monochrome component logos match label colors and use scoped tint filters', () => {
+  const components = [{ name: 'Light', ring: 1, logo: png, categoryId: 'light' }, { name: 'Dark', ring: 1, logo: png, categoryId: 'dark' }];
+  for (const render of [renderRingMosaic, renderPuzzleMosaic]) {
+    const options = { categoryColors: { light: '#fff', dark: '#000' }, idPrefix: 'tint', monochromeLogos: true };
+    const svg = render(components, options);
+    assert.match(svg, /feFlood flood-color="#182323"/);
+    assert.match(svg, /feFlood flood-color="#ffffff"/);
+    assert.match(svg, /<image[^>]+filter="url\(#tint-logo-182323\)"/);
+    assert.match(svg, /<image[^>]+filter="url\(#tint-logo-ffffff\)"/);
+    assert.doesNotMatch(render(components), /feColorMatrix/);
+    assert.throws(() => render(components, { monochromeLogos: 'yes' }), /monochromeLogos must be a boolean/);
+  }
 });
 
 test('measurement callback receives font size, changes layout and must return usable widths', () => {

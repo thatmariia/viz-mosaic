@@ -77,6 +77,9 @@ export function renderCircularMosaic(components, options = {}, style) {
     throw new TypeError('idPrefix must start with a letter and contain only letters, digits, underscores, dots, or hyphens.');
   }
   if (typeof measureText !== 'function') throw new TypeError('measureText must be a function.');
+  if (options.monochromeLogos !== undefined && typeof options.monochromeLogos !== 'boolean') {
+    throw new TypeError('monochromeLogos must be a boolean.');
+  }
   if (!categoryColors || typeof categoryColors !== 'object' || Array.isArray(categoryColors)) {
     throw new TypeError('categoryColors must be an object mapping category IDs to hex colors.');
   }
@@ -125,6 +128,7 @@ export function renderCircularMosaic(components, options = {}, style) {
   const extent = maxRing ? firstRadius + (maxRing - 1) * PITCH + BAND / 2 + 12 : 86;
   const defs = puzzle ? [] : [`<filter id="${idPrefix}-shadow" x="-50%" y="-50%" width="200%" height="200%" color-interpolation-filters="sRGB"><feDropShadow dx="0" dy="0" stdDeviation="4.5" flood-opacity="0.32"/></filter>`];
   const content = [];
+  const logoFilters = new Set();
 
   for (const [ring, entries] of [...rings].sort(([a], [b]) => a - b)) {
     const radius = firstRadius + (ring - 1) * PITCH;
@@ -145,6 +149,7 @@ export function renderCircularMosaic(components, options = {}, style) {
     segments.forEach((segment, index) => {
       const { name, logo, start, end, color, categoryId, width } = segment;
       const id = `${idPrefix}-r${ring}-c${index}`;
+      const textColor = contrastColor(color);
       const category = categoryId === undefined ? '' : ` data-category-id="${escape(categoryId)}"`;
       const startVariant = ring + index;
       const endVariant = ring + (index + 1) % segments.length;
@@ -174,12 +179,26 @@ export function renderCircularMosaic(components, options = {}, style) {
         const logoAngle = middle - direction * (width + GAP) / (2 * radius);
         const [x, y] = point(radius, logoAngle);
         const rotation = number((logoAngle + direction * Math.PI / 2) * 180 / Math.PI);
-        image = `<image href="${escape(logo)}" x="${number(x - LOGO_SIZE / 2)}" y="${number(y - LOGO_SIZE / 2)}" width="${LOGO_SIZE}" height="${LOGO_SIZE}" transform="rotate(${rotation} ${x} ${y})" preserveAspectRatio="xMidYMid meet"/>`;
+        let filter = '';
+        if (options.monochromeLogos) {
+          const filterId = `${idPrefix}-logo-${textColor.slice(1)}`;
+          if (!logoFilters.has(textColor)) {
+            logoFilters.add(textColor);
+            // Turn white artwork into cutouts, retain the source alpha, then tint.
+            defs.push(`<filter id="${filterId}" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB"><feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -0.2126 -0.7152 -0.0722 0 1" result="ink"/><feComposite in="ink" in2="SourceGraphic" operator="in" result="alpha"/><feFlood flood-color="${textColor}"/><feComposite in2="alpha" operator="in"/></filter>`);
+          }
+          filter = ` filter="url(#${filterId})"`;
+        }
+        image = `<image href="${escape(logo)}" x="${number(x - LOGO_SIZE / 2)}" y="${number(y - LOGO_SIZE / 2)}" width="${LOGO_SIZE}" height="${LOGO_SIZE}" transform="rotate(${rotation} ${x} ${y})"${filter} preserveAspectRatio="xMidYMid meet"/>`;
       }
-      labels.push(`<g>${image}<text fill="${contrastColor(color)}" text-anchor="middle" xml:space="preserve"><textPath href="#${id}-label" startOffset="50%">${escape(name)}</textPath></text></g>`);
+      labels.push(`<g>${image}<text fill="${textColor}" text-anchor="middle" xml:space="preserve"><textPath href="#${id}-label" startOffset="50%">${escape(name)}</textPath></text></g>`);
     });
     content.push(`<g data-ring="${ring}" data-radius="${number(radius)}">${bases.join('')}${joins.join('')}${labels.join('')}</g>`);
   }
-  if (centerLogo) content.push(`<image href="${escape(centerLogo)}" x="-24" y="-24" width="48" height="48" preserveAspectRatio="xMidYMid meet"/>`);
+  if (centerLogo) {
+    const innerRadius = maxRing ? firstRadius + (Math.min(...rings.keys()) - 1) * PITCH - BAND / 2 : extent;
+    const size = (innerRadius - 12) * Math.SQRT2;
+    content.push(`<image href="${escape(centerLogo)}" x="${number(-size / 2)}" y="${number(-size / 2)}" width="${number(size)}" height="${number(size)}" preserveAspectRatio="xMidYMid meet"/>`);
+  }
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${number(-extent)} ${number(-extent)} ${number(extent * 2)} ${number(extent * 2)}" role="img" aria-labelledby="${idPrefix}-title" font-family="${FONT}" font-size="${FONT_SIZE}" font-weight="500"><title id="${idPrefix}-title">${escape(title)}</title><defs>${defs.join('')}</defs>${content.join('')}</svg>`;
 }
