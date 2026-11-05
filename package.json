@@ -1,0 +1,19 @@
+{
+  "name": "viz-mosaic",
+  "version": "0.1.0",
+  "description": "Small, portable SVG visualizations. Starting with ring mosaics.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "import": "./src/index.js"
+    }
+  },
+  "types": "./types/index.d.ts",
+  "files": ["src", "types", "demo", "README.md"],
+  "scripts": {
+    "test": "node --test",
+    "demo": "node scripts/serve-demo.js"
+  },
+  "engines": { "node": ">=20" }
+}
