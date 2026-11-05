@@ -1,21 +1,18 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { renderRingMosaic, renderPuzzleMosaic } from '../src/index.js';
-import { puzzleEdge } from '../src/puzzle-piece.js';
 
-test('curved puzzle pieces retain input order and have a join at every boundary', () => {
+test('curved puzzle pieces retain input order and use inset outlines without strokes or masks', () => {
   const svg = renderPuzzleMosaic(['First', 'Second', 'Third'].map(name => ({ name, ring: 1, categoryId: 'same' })), { categoryColors: { same: '#abc' } });
   assert.deepEqual([...svg.matchAll(/data-component="([^"]+)"/g)].map(match => match[1]), ['First', 'Second', 'Third']);
-  assert.equal((svg.match(/data-puzzle-join=/g) || []).length, 3);
-  assert.equal((svg.match(/stroke="#ffffff" stroke-width="6"/g) || []).length, 3);
+  assert.equal((svg.match(/data-puzzle-piece=/g) || []).length, 3);
+  assert.doesNotMatch(svg, /<mask|stroke=|stroke-width=/);
   assert.doesNotMatch(svg, /stroke="#182323"|stroke-opacity=/);
   assert.equal((svg.match(/<textPath /g) || []).length, 3);
-  const pieces = [...svg.matchAll(/<g data-component=[^>]+><path d="([^"]+)" fill="(#abc)"/g)];
+  const pieces = [...svg.matchAll(/<g data-component=[^>]+><path data-puzzle-piece="" d="([^"]+)" fill="(#abc)"/g)];
   assert.equal(pieces.length, 3);
   for (const [, path] of pieces) {
-    assert.match(path, / A /); // Circular edges around the center.
-    assert.match(path, / Q /); // Soft corners.
-    assert.match(path, / C /); // Organic connections.
+    assert.match(path, / Q /); // Smooth, inset outlines include every edge.
     assert.ok(path.endsWith(' Z'));
   }
   assert.doesNotMatch(svg, /NaN|undefined|Infinity/);
@@ -43,22 +40,24 @@ test('ring and puzzle mosaics use independent IDs and the same input validation'
   }
 });
 
-test('organic connections and their sockets trace exactly the same curves in reverse', () => {
-  function curves(path, start) {
-    let previous = start;
-    return [...path.matchAll(/C ([\d., -]+)/g)].map(match => {
-      const values = match[1].trim().split(/[ ,]+/).map(Number);
-      const points = [previous, values.slice(0, 2), values.slice(2, 4), values.slice(4, 6)];
-      previous = points[3];
-      return points;
-    });
-  }
-  for (const angle of [-1.9, 0, 2.1, 4.4]) {
-    for (const variant of [1, 2, 3]) {
-      const point = radius => [Number((radius * Math.cos(angle)).toFixed(4)), Number((radius * Math.sin(angle)).toFixed(4))];
-      const forward = curves(puzzleEdge(152, angle, variant), point(178));
-      const reverse = curves(puzzleEdge(152, angle, variant, true), point(126));
-      assert.deepEqual(reverse, forward.reverse().map(curve => curve.reverse()));
+test('calculated spacing separates whole outlines, including circular edges between rings', () => {
+  const svg = renderPuzzleMosaic(['A', 'B', 'C', 'D'].map((name, index) => ({ name, ring: index < 2 ? 1 : 2 })));
+  const outlines = [...svg.matchAll(/data-puzzle-piece="" d="([^"]+)"/g)].map(match =>
+    [...match[1].matchAll(/[MQ] ([\d., -]+)/g)].flatMap(command => {
+      const values = command[1].trim().split(/[ ,]+/).map(Number);
+      return values.length === 2 ? [values] : [values.slice(0, 2), values.slice(2, 4)];
+    }),
+  );
+  assert.equal(outlines.length, 4);
+  for (const [index, outline] of outlines.entries()) {
+    const radius = index < 2 ? 88 : 152;
+    assert.ok(outline.every(point => Math.hypot(...point) >= radius - 29.2 && Math.hypot(...point) <= radius + 29.2));
+    for (const other of outlines.slice(index + 1)) {
+      let closestSquared = Infinity;
+      for (const point of outline) for (const next of other) {
+        closestSquared = Math.min(closestSquared, (point[0] - next[0]) ** 2 + (point[1] - next[1]) ** 2);
+      }
+      assert.ok(closestSquared >= 5.7 ** 2, 'Piece outlines must retain the six-unit gap within curve approximation tolerance.');
     }
   }
 });

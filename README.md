@@ -53,7 +53,7 @@ const svg = renderPuzzleMosaic(
 );
 ```
 
-Puzzle mosaic keeps circular ring edges and solid category fills. Components within each ring connect through varied, flowing lobes and matching sockets, with softened corners and white spacing between pieces. Adjacent rings retain their circular boundaries with the same white spacing. A ring with one component forms a complete band without a connection to itself. The default accessible title is `Puzzle mosaic`; all other input rules, image behavior, and export formats are shared with ring mosaic. TypeScript callers can use `PuzzleMosaicComponent` and `PuzzleMosaicOptions`.
+Puzzle mosaic keeps circular ring edges and solid category fills. Components within each ring connect through simple rounded lobes and matching sockets, with heavily rounded corners and transparent spacing around every piece. The layout insets complete outlines by three SVG units to create six-unit gaps, including the circular edges between rings. Rounded curves use a fine geometric approximation; gaps are empty space rather than painted strokes or masks. They reveal the background in SVG and PNG; JPEG exports use a white background. A ring with one component forms a complete band without a connection to itself. The default accessible title is `Puzzle mosaic`; all other input rules, image behavior, and export formats are shared with ring mosaic. TypeScript callers can use `PuzzleMosaicComponent` and `PuzzleMosaicOptions`.
 
 ### Components
 
@@ -74,7 +74,7 @@ Puzzle mosaic keeps circular ring edges and solid category fills. Components wit
 | `idPrefix` | Optional stable ID prefix, starting with a letter and containing letters, digits, `_`, `.`, or `-`. Supply a **distinct prefix per inline diagram**. Defaults are unique per render. |
 | `measureText(name, fontSize)` | Optional callback returning a positive finite width in SVG pixels. Uses Arial, Helvetica, or sans-serif at weight 500. |
 
-Categories share colors across rings. Unmapped categories receive deterministic palette colors. Components without categories use the palette in ring order, avoiding equal neighboring colors where possible. Repeated colors remain distinguishable through overlapping shadows in ring mosaic and white spacing in puzzle mosaic. Text switches between dark and white according to the fill color.
+Categories share colors across rings. Unmapped categories receive deterministic palette colors. Components without categories use the palette in ring order, avoiding equal neighboring colors where possible. Repeated colors remain distinguishable through overlapping shadows in ring mosaic and transparent spacing in puzzle mosaic. Text switches between dark and white according to the fill color.
 
 The result is a complete responsive SVG string, with its own styles, scoped IDs, accessibility name, and embedded images. An empty component array produces a small, accessible empty canvas, optionally with a center logo. Inputs are never mutated.
 

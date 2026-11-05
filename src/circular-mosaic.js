@@ -1,4 +1,4 @@
-import { puzzleEdge, puzzlePiece } from './puzzle-piece.js';
+import { PUZZLE_GAP, puzzlePiece } from './puzzle-piece.js';
 
 const TAU = Math.PI * 2;
 const BAND = 64;
@@ -148,14 +148,11 @@ export function renderCircularMosaic(components, options = {}, style) {
       const category = categoryId === undefined ? '' : ` data-category-id="${escape(categoryId)}"`;
       const startVariant = ring + index;
       const endVariant = ring + (index + 1) % segments.length;
-      const piece = puzzle ? puzzlePiece(radius, start, end, startVariant, endVariant) : sector(radius, start, end);
       const base = segments.length === 1
-        ? `<circle r="${number(radius)}" fill="none" stroke="${color}" stroke-width="${BAND}"/>`
-        : `<path d="${piece}" fill="${color}"/>`;
+        ? `<circle r="${number(radius)}" fill="none" stroke="${color}" stroke-width="${puzzle ? BAND - PUZZLE_GAP : BAND}"/>`
+        : `<path${puzzle ? ' data-puzzle-piece=""' : ''} d="${puzzle ? puzzlePiece(radius, start, end, startVariant, endVariant) : sector(radius, start, end)}" fill="${color}"/>`;
       bases.push(`<g data-component="${escape(name)}"${category}>${base}</g>`);
-      if (segments.length > 1 && puzzle) {
-        joins.push(`<path data-puzzle-join="${index}" d="M ${point(radius + 26, end)} ${puzzleEdge(radius, end, endVariant)}" fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>`);
-      } else if (segments.length > 1) {
+      if (segments.length > 1 && !puzzle) {
         // Every join is a separate pass, including the last-to-first join. Clip
         // shadows to the following strip so they merge cleanly into this strip.
         defs.push(`<clipPath id="${id}-join"><path d="${sector(radius, end, end + BAND * 1.5 / radius)}"/></clipPath>`);
@@ -182,13 +179,6 @@ export function renderCircularMosaic(components, options = {}, style) {
       labels.push(`<g>${image}<text fill="${contrastColor(color)}" text-anchor="middle" xml:space="preserve"><textPath href="#${id}-label" startOffset="50%">${escape(name)}</textPath></text></g>`);
     });
     content.push(`<g data-ring="${ring}" data-radius="${number(radius)}">${bases.join('')}${joins.join('')}${labels.join('')}</g>`);
-  }
-  if (puzzle) {
-    for (const ring of rings.keys()) {
-      if (!rings.has(ring + 1)) continue;
-      const radius = firstRadius + (ring - 1) * PITCH + BAND / 2;
-      content.push(`<circle r="${number(radius)}" fill="none" stroke="#ffffff" stroke-width="6"/>`);
-    }
   }
   if (centerLogo) content.push(`<image href="${escape(centerLogo)}" x="-24" y="-24" width="48" height="48" preserveAspectRatio="xMidYMid meet"/>`);
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${number(-extent)} ${number(-extent)} ${number(extent * 2)} ${number(extent * 2)}" role="img" aria-labelledby="${idPrefix}-title" font-family="${FONT}" font-size="${FONT_SIZE}" font-weight="500"><title id="${idPrefix}-title">${escape(title)}</title><defs>${defs.join('')}</defs>${content.join('')}</svg>`;
