@@ -7,7 +7,7 @@ test('curved puzzle pieces retain input order and have a join at every boundary'
   const svg = renderPuzzleMosaic(['First', 'Second', 'Third'].map(name => ({ name, ring: 1, categoryId: 'same' })), { categoryColors: { same: '#abc' } });
   assert.deepEqual([...svg.matchAll(/data-component="([^"]+)"/g)].map(match => match[1]), ['First', 'Second', 'Third']);
   assert.equal((svg.match(/data-puzzle-join=/g) || []).length, 3);
-  assert.equal((svg.match(/stroke="#ffffff" stroke-width="3"/g) || []).length, 3);
+  assert.equal((svg.match(/stroke="#ffffff" stroke-width="6"/g) || []).length, 3);
   assert.doesNotMatch(svg, /stroke="#182323"|stroke-opacity=/);
   assert.equal((svg.match(/<textPath /g) || []).length, 3);
   const pieces = [...svg.matchAll(/<g data-component=[^>]+><path d="([^"]+)" fill="(#abc)"/g)];

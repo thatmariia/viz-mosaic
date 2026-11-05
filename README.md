@@ -53,7 +53,7 @@ const svg = renderPuzzleMosaic(
 );
 ```
 
-Puzzle mosaic keeps circular ring edges and solid category fills. Components within each ring connect through varied, flowing lobes and matching sockets, with softened corners and narrow white seams. Adjacent rings retain their circular boundaries with the same white spacing. A ring with one component forms a complete band without a connection to itself. The default accessible title is `Puzzle mosaic`; all other input rules, image behavior, and export formats are shared with ring mosaic. TypeScript callers can use `PuzzleMosaicComponent` and `PuzzleMosaicOptions`.
+Puzzle mosaic keeps circular ring edges and solid category fills. Components within each ring connect through varied, flowing lobes and matching sockets, with softened corners and white spacing between pieces. Adjacent rings retain their circular boundaries with the same white spacing. A ring with one component forms a complete band without a connection to itself. The default accessible title is `Puzzle mosaic`; all other input rules, image behavior, and export formats are shared with ring mosaic. TypeScript callers can use `PuzzleMosaicComponent` and `PuzzleMosaicOptions`.
 
 ### Components
 

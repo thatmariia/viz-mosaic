@@ -154,7 +154,7 @@ export function renderCircularMosaic(components, options = {}, style) {
         : `<path d="${piece}" fill="${color}"/>`;
       bases.push(`<g data-component="${escape(name)}"${category}>${base}</g>`);
       if (segments.length > 1 && puzzle) {
-        joins.push(`<path data-puzzle-join="${index}" d="M ${point(radius + 26, end)} ${puzzleEdge(radius, end, endVariant)}" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`);
+        joins.push(`<path data-puzzle-join="${index}" d="M ${point(radius + 26, end)} ${puzzleEdge(radius, end, endVariant)}" fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>`);
       } else if (segments.length > 1) {
         // Every join is a separate pass, including the last-to-first join. Clip
         // shadows to the following strip so they merge cleanly into this strip.
@@ -187,7 +187,7 @@ export function renderCircularMosaic(components, options = {}, style) {
     for (const ring of rings.keys()) {
       if (!rings.has(ring + 1)) continue;
       const radius = firstRadius + (ring - 1) * PITCH + BAND / 2;
-      content.push(`<circle r="${number(radius)}" fill="none" stroke="#ffffff" stroke-width="3"/>`);
+      content.push(`<circle r="${number(radius)}" fill="none" stroke="#ffffff" stroke-width="6"/>`);
     }
   }
   if (centerLogo) content.push(`<image href="${escape(centerLogo)}" x="-24" y="-24" width="48" height="48" preserveAspectRatio="xMidYMid meet"/>`);
