@@ -15,11 +15,14 @@ test('packed package installs offline and exposes the public import and declarat
     assert.ok(pack.files.some(file => file.path === 'types/index.d.ts'));
     assert.ok(!pack.files.some(file => file.path.startsWith('test/')));
     execFileSync('npm', ['install', join(temporary, pack.filename), '--prefix', temporary, '--offline', '--ignore-scripts', '--no-audit', '--no-fund', '--cache', cache], { encoding: 'utf8' });
-    const svg = execFileSync(process.execPath, ['--input-type=module', '-e', "import { renderRingMosaic } from 'viz-mosaic'; console.log(renderRingMosaic([{name:'Consumer',ring:4,categoryId:1}],{categoryColors:{1:'#abc'}}));"], { cwd: temporary, encoding: 'utf8' });
-    assert.match(svg, /data-ring="4"/);
-    assert.match(svg, /stroke="#abc"/);
+    const svgs = JSON.parse(execFileSync(process.execPath, ['--input-type=module', '-e', "import { renderRingMosaic, renderPuzzleMosaic } from 'viz-mosaic'; console.log(JSON.stringify([renderRingMosaic,renderPuzzleMosaic].map(render=>render([{name:'Consumer',ring:4,categoryId:1}],{categoryColors:{1:'#abc'}}))));"], { cwd: temporary, encoding: 'utf8' }));
+    for (const svg of svgs) {
+      assert.match(svg, /data-ring="4"/);
+      assert.match(svg, /stroke="#abc"/);
+    }
     const declaration = readFileSync(join(temporary, 'node_modules/viz-mosaic/types/index.d.ts'), 'utf8');
     assert.match(declaration, /export function renderRingMosaic/);
+    assert.match(declaration, /export function renderPuzzleMosaic/);
   } finally {
     rmSync(temporary, { recursive: true, force: true });
   }

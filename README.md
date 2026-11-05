@@ -1,8 +1,8 @@
 # viz-mosaic
 
-Small JavaScript visualizations that export portable SVG. Ring mosaic is the first renderer; future visualizations can add their own modules and public exports without changing this API.
+Small JavaScript visualizations that export portable SVG. Includes ring mosaic and puzzle mosaic, with the same component and category inputs.
 
-The renderer is synchronous ESM with TypeScript declarations and no runtime dependencies. The demo uses native browser modules and a simple documentation-style theme inspired by [Zensical](https://zensical.org/docs/).
+Both renderers are synchronous ESM with TypeScript declarations and no runtime dependencies. The demo uses native browser modules and a simple documentation-style theme inspired by [Zensical](https://zensical.org/docs/).
 
 ## Run locally
 
@@ -13,7 +13,7 @@ npm test
 npm run demo
 ```
 
-Open <http://127.0.0.1:3000/demo/>. Set `PORT=3001` to use another port. Select **Packed rings** for the reference composition or **Skipped ring** to see positions 1, 2, and 4 with a logo-plus-name strip. Edit components, attach PNG/JPEG images, optionally set category colors, then select a format and choose **Download**. The download contains the diagram currently shown in the valid preview; invalid input disables downloading.
+Open <http://127.0.0.1:3000/demo/>. Set `PORT=3001` to use another port. Switch between **Ring mosaic** and **Puzzle mosaic** above the editor; your components, colors, title, and images are preserved. Select **Packed rings** for the reference composition or **Skipped ring** to see positions 1, 2, and 4 with a logo-plus-name strip. Edit components, attach PNG/JPEG images, optionally set category colors, then select a format and choose **Download**. The download contains the diagram currently shown in the valid preview; invalid input disables downloading.
 
 SVG preserves vector geometry and embedded images. PNG uses a transparent background; JPEG uses white. Browser raster exports use twice the SVG dimensions, capped at 4,096 pixels per side. The public renderer always returns SVG; raster conversion stays in the demo's browser code.
 
@@ -35,7 +35,25 @@ const svg = renderRingMosaic(
 );
 ```
 
-Names and ring indices are the only required component fields. A ring is a distance index: ring 1 is nearest the center. Equal indices share a ring in input order, clockwise. Missing indices remain empty, including when only ring 4 is present. Occupied consecutive rings touch. One component forms a complete band with its label at the top.
+Names and ring indices are the only required component fields. A ring is a distance index: ring 1 is nearest the center. Equal indices share a ring in input order, clockwise. Missing indices remain empty, including when only ring 4 is present. Consecutive ring positions are adjacent. One component forms a complete band with its label at the top.
+
+### Puzzle mosaic
+
+Use `renderPuzzleMosaic` with the same inputs and options:
+
+```js
+import { renderPuzzleMosaic } from 'viz-mosaic';
+
+const svg = renderPuzzleMosaic(
+  [
+    { name: 'Collection', ring: 1, categoryId: 'data' },
+    { name: 'Processing', ring: 1, categoryId: 'tools' },
+  ],
+  { categoryColors: { data: '#006b50', tools: '#0653c4' } },
+);
+```
+
+Puzzle mosaic keeps circular ring edges and solid category fills. Components within each ring connect through varied, flowing lobes and matching sockets, with softened corners and narrow white seams. Adjacent rings retain their circular boundaries with the same white spacing. A ring with one component forms a complete band without a connection to itself. The default accessible title is `Puzzle mosaic`; all other input rules, image behavior, and export formats are shared with ring mosaic. TypeScript callers can use `PuzzleMosaicComponent` and `PuzzleMosaicOptions`.
 
 ### Components
 
@@ -50,13 +68,13 @@ Names and ring indices are the only required component fields. A ring is a dista
 
 | Field | Behavior |
 | --- | --- |
-| `title` | Accessible SVG name; defaults to `Ring mosaic`. |
+| `title` | Accessible SVG name; defaults to `Ring mosaic` or `Puzzle mosaic` for the corresponding renderer. |
 | `centerLogo` | Optional base64 PNG or JPEG data URL, centered and upright. |
 | `categoryColors` | Optional object mapping category IDs to opaque `#rgb` or `#rrggbb` colors. |
 | `idPrefix` | Optional stable ID prefix, starting with a letter and containing letters, digits, `_`, `.`, or `-`. Supply a **distinct prefix per inline diagram**. Defaults are unique per render. |
 | `measureText(name, fontSize)` | Optional callback returning a positive finite width in SVG pixels. Uses Arial, Helvetica, or sans-serif at weight 500. |
 
-Categories share colors across rings. Unmapped categories receive deterministic palette colors. Components without categories use the palette in ring order, avoiding equal neighboring colors where possible. Repeated category colors retain rounded joins and local shadows. Text switches between dark and white according to the fill color.
+Categories share colors across rings. Unmapped categories receive deterministic palette colors. Components without categories use the palette in ring order, avoiding equal neighboring colors where possible. Repeated colors remain distinguishable through overlapping shadows in ring mosaic and white spacing in puzzle mosaic. Text switches between dark and white according to the fill color.
 
 The result is a complete responsive SVG string, with its own styles, scoped IDs, accessibility name, and embedded images. An empty component array produces a small, accessible empty canvas, optionally with a center logo. Inputs are never mutated.
 
@@ -134,4 +152,4 @@ Use small feature branches, lowercase conventional commits (`feat:`, `fix:`, `te
 
 Run `npm test` before merging. Tests cover distance semantics, full circles, density, validation, XML escaping, category colors, embedded logos, ID scoping, measurement, immutability, and packed installation. GitHub Actions runs the same checks on pushes and pull requests. Browser verification should cover upper/lower labels, logos, rounded joins including wraparound, dense rings, mobile layout, and an independently opened offline download.
 
-The packed-ring demo follows the supplied screenshot's touching bands, palette, overlapping ends, and center mark. The original optional HTML prototypes were not supplied. The neutral sample components and generated PNG marks ship with the demo.
+The packed-ring demo follows the supplied screenshot's touching bands, palette, overlapping ends, and center mark. Puzzle connections take their flowing shapes from the supplied organic-puzzle reference while keeping the circular rings and category fills. The original optional HTML prototypes were not supplied. The neutral sample components and generated PNG marks ship with the demo.

@@ -1,4 +1,4 @@
-import { renderRingMosaic } from '../src/index.js';
+import { renderRingMosaic, renderPuzzleMosaic } from '../src/index.js';
 import { downloadDiagram } from './download.js';
 
 const $ = selector => document.querySelector(selector);
@@ -7,6 +7,7 @@ let components;
 let categoryColors;
 let centerLogo;
 let svg = '';
+let visualization = 'ring';
 
 function placeholderLogo(background, size) {
   const canvas = document.createElement('canvas');
@@ -50,7 +51,8 @@ function render() {
       if (Object.hasOwn(colors, entry.id)) throw new Error(`Category "${entry.id}" has more than one custom color.`);
       colors[entry.id] = entry.color;
     }
-    svg = renderRingMosaic(components.map(({ id, ...component }) => component), {
+    const renderMosaic = visualization === 'puzzle' ? renderPuzzleMosaic : renderRingMosaic;
+    svg = renderMosaic(components.map(({ id, ...component }) => component), {
       title: $('#title').value,
       centerLogo,
       categoryColors: colors,
@@ -203,6 +205,19 @@ $('#add-color').addEventListener('click', () => {
 });
 
 $('#title').addEventListener('input', render);
+$('.visualizations').addEventListener('click', event => {
+  const button = event.target.closest('[data-visualization]');
+  if (!button) return;
+  visualization = button.dataset.visualization;
+  const name = button.textContent;
+  for (const option of document.querySelectorAll('[data-visualization]')) {
+    option.setAttribute('aria-pressed', String(option === button));
+  }
+  $('#visualization-heading').textContent = name;
+  $('#visualization-label').textContent = name.toLowerCase();
+  document.title = `viz-mosaic · ${name}`;
+  render();
+});
 $('#center-logo').addEventListener('change', async event => {
   if (!event.target.files[0]) return;
   try {

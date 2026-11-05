@@ -28,3 +28,13 @@ export function renderRingMosaic(
   components: readonly RingMosaicComponent[],
   options?: RingMosaicOptions,
 ): string;
+
+export type PuzzleMosaicComponent = RingMosaicComponent;
+/** Same options as ring mosaic; the default title is "Puzzle mosaic". */
+export type PuzzleMosaicOptions = RingMosaicOptions;
+
+/** Curved, interlocking puzzle pieces using the same component layout contract. */
+export function renderPuzzleMosaic(
+  components: readonly PuzzleMosaicComponent[],
+  options?: PuzzleMosaicOptions,
+): string;
