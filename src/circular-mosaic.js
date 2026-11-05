@@ -1,7 +1,7 @@
 import { PUZZLE_GAP, PUZZLE_JOIN_REACH, puzzlePiece } from './puzzle-piece.js';
 import { assignColors, contrastColor } from './colors.js';
 import { FONT_SIZE, LOGO_SIZE, GAP, number, escapeXML as escape, createImages, svgDocument } from './svg.js';
-import { renderRadialLayout } from './radial-layout.js';
+import { RADIAL_FONT_SIZE, renderRadialLayout } from './radial-layout.js';
 
 const TAU = Math.PI * 2;
 const BAND = 64;
@@ -21,12 +21,12 @@ function sector(radius, start, end) {
 }
 
 // Deliberately conservative; callers can supply measured widths for their font.
-function estimateWidth(name) {
+function estimateWidth(name, fontSize) {
   return Array.from(name).reduce((width, character) => {
     if (/\p{Mark}/u.test(character)) return width;
-    if (/\s/u.test(character)) return width + FONT_SIZE * 0.35;
-    if (/[ilI.,'!:;|]/u.test(character)) return width + FONT_SIZE * 0.35;
-    return width + FONT_SIZE * (/[^\u0000-\u024f]/u.test(character) ? 1.05 : 0.72);
+    if (/\s/u.test(character)) return width + fontSize * 0.35;
+    if (/[ilI.,'!:;|]/u.test(character)) return width + fontSize * 0.35;
+    return width + fontSize * (/[^\u0000-\u024f]/u.test(character) ? 1.05 : 0.72);
   }, 0);
 }
 
@@ -84,7 +84,7 @@ export function renderCircularMosaic(components, options = {}, style) {
       (typeof categoryId === 'number' && Number.isFinite(categoryId))
     )) throw new TypeError(`${label}: categoryId must be a nonempty string or a finite number.`);
     const logo = imageData(component.logo, `${label} logo`);
-    const width = measureText(name, FONT_SIZE);
+    const width = measureText(name, style === 'radial' ? RADIAL_FONT_SIZE : FONT_SIZE);
     if (!Number.isFinite(width) || width <= 0) throw new TypeError(`${label}: measureText must return a positive finite width.`);
     const groupWidth = width + (logo ? LOGO_SIZE + GAP : 0);
     if (!rings.has(ring)) rings.set(ring, []);

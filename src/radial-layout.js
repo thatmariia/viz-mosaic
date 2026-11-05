@@ -1,13 +1,15 @@
 import { assignColors, contrastColor } from './colors.js';
-import { FONT_SIZE, number, escapeXML, createImages, svgDocument } from './svg.js';
+import { GAP, number, escapeXML, createImages, svgDocument } from './svg.js';
 
+export const RADIAL_FONT_SIZE = 36;
+const LOGO_SIZE = 64;
 const TAU = Math.PI * 2;
 const TIP = 4;
-const CAP = 44;
+const CAP = 80;
 const PITCH = 84;
 // Labels start where the taper has room for half a glyph height plus padding.
-const LABEL_FRACTION = (FONT_SIZE / 2 + 6 - TIP) / (CAP - TIP);
-const labelEnd = entry => entry.logo ? -CAP - 12 : CAP - 14;
+const LABEL_FRACTION = (RADIAL_FONT_SIZE / 2 + 6 - TIP) / (CAP - TIP);
+const labelEnd = entry => entry.logo ? -LOGO_SIZE / 2 - GAP : CAP - 14;
 
 // The convex hull of two unequal circles: straight taper, fully rounded ends.
 function rayPath(inner, outer) {
@@ -20,7 +22,7 @@ function rayPath(inner, outer) {
 export function renderRadialLayout(entries, { colors, centerLogo, title, idPrefix, monochromeLogos }) {
   // Keep each complete ray within its angular slot, including both round ends.
   const halfSlot = Math.sin(Math.PI / Math.max(2, entries.length)) * 0.85;
-  const innerRadius = Math.max(76, (TIP + 3) / halfSlot - TIP);
+  const innerRadius = Math.max(112, (TIP + 3) / halfSlot - TIP);
   const inner = innerRadius + TIP;
   let firstRadius = Math.max(220, CAP / halfSlot, inner + CAP * 2);
   for (const entry of entries) {
@@ -48,8 +50,8 @@ export function renderRadialLayout(entries, { colors, centerLogo, title, idPrefi
     const labelStart = inner + LABEL_FRACTION * (outer - inner);
     const labelCenter = (labelStart + outer + labelEnd(entry)) / 2;
     const category = categoryId === undefined ? '' : ` data-category-id="${escapeXML(categoryId)}"`;
-    content.push(`<g data-component="${escapeXML(name)}" data-ring="${ring}"${category} transform="rotate(${rotation})"><path d="${rayPath(inner, outer)}" fill="${color}"/><circle cx="${number(outer)}" cy="0" r="${CAP}" fill="#000000" fill-opacity="0.08"/>${images.component(logo, number(outer), 0, flip, textColor)}<text x="0" y="${FONT_SIZE * 0.33}" fill="${textColor}" text-anchor="middle" xml:space="preserve" transform="translate(${number(labelCenter)} 0) rotate(${flip})">${escapeXML(name)}</text></g>`);
+    content.push(`<g data-component="${escapeXML(name)}" data-ring="${ring}" data-radius="${number(outer)}"${category} transform="rotate(${rotation})"><path d="${rayPath(inner, outer)}" fill="${color}"/>${images.component(logo, number(outer), 0, flip, textColor, LOGO_SIZE)}<text x="0" y="${RADIAL_FONT_SIZE * 0.33}" fill="${textColor}" text-anchor="middle" xml:space="preserve" transform="translate(${number(labelCenter)} 0) rotate(${flip})">${escapeXML(name)}</text></g>`);
   }
   content.push(images.center(centerLogo, entries.length ? innerRadius : 76));
-  return svgDocument(title, idPrefix, extent, defs, content);
+  return svgDocument(title, idPrefix, extent, defs, content, RADIAL_FONT_SIZE);
 }

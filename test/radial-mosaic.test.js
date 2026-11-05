@@ -4,7 +4,7 @@ import { renderRadialMosaic, renderRingMosaic } from '../src/index.js';
 
 const png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==';
 const pieces = svg => [...svg.matchAll(/<g data-component="([^"]+)"[^>]+>(.*?)<\/g>/g)];
-const reach = piece => Number(piece[2].match(/<circle cx="([\d.]+)"/)[1]);
+const reach = piece => Number(piece[0].match(/data-radius="([\d.]+)"/)[1]);
 
 test('radial mosaic keeps global input order and uses distance indices for outward reach', () => {
   const components = Object.freeze([4, 1, 2].map((ring, index) => Object.freeze({ name: `Tool ${index}`, ring })));
@@ -14,10 +14,11 @@ test('radial mosaic keeps global input order and uses distance indices for outwa
   assert.equal(reach(rays[0]) - reach(rays[1]), 3 * 84);
   assert.equal(reach(rays[2]) - reach(rays[1]), 84);
   const single = pieces(renderRadialMosaic([{ name: 'Only', ring: 4 }], { measureText: () => 50 }));
-  assert.equal(reach(single[0]), 220 + 3 * 84);
+  const nearest = pieces(renderRadialMosaic([{ name: 'Only', ring: 1 }], { measureText: () => 50 }));
+  assert.equal(reach(single[0]) - reach(nearest[0]), 3 * 84);
   assert.match(svg, /rotate\(-90\)/);
   assert.match(svg, /rotate\(150\)/);
-  assert.doesNotMatch(svg, /<textPath|stroke=|<mask|NaN|Infinity|undefined/);
+  assert.doesNotMatch(svg, /<circle|fill-opacity|<textPath|stroke=|<mask|NaN|Infinity|undefined/);
 });
 
 test('radial rays grow for density and labels while retaining transparent space and round ends', () => {
@@ -26,8 +27,8 @@ test('radial rays grow for density and labels while retaining transparent space 
   const rays = pieces(svg);
   const outer = reach(rays[0]);
   assert.equal(rays.length, count);
-  assert.ok(2 * outer * Math.sin(Math.PI / count) > 2 * 44 + 6, 'Rounded end faces must remain separated.');
-  assert.match(rays[0][2], / A 44 44 0 1 1 /);
+  assert.ok(2 * outer * Math.sin(Math.PI / count) > 2 * 80 + 6, 'Rounded ends must remain separated.');
+  assert.match(rays[0][2], / A 80 80 0 1 1 /);
   assert.match(rays[0][2], / A 4 4 0 0 1 /);
   const long = pieces(renderRadialMosaic([{ name: 'Long name', ring: 1 }], { measureText: () => 500 }));
   assert.ok(reach(long[0]) > 700);
@@ -36,13 +37,19 @@ test('radial rays grow for density and labels while retaining transparent space 
 });
 
 test('radial logos face with readable labels and the upright center fits the open space', () => {
+  const measuredSizes = [];
   const svg = renderRadialMosaic(Array.from({ length: 4 }, (_, index) => ({ name: `Tool ${index}`, ring: 1, logo: png, categoryId: 0 })), {
     centerLogo: png, monochromeLogos: true, categoryColors: { 0: '#abc' }, idPrefix: 'radial-test',
+    measureText: (name, size) => { measuredSizes.push(size); return name.length * size * 0.6; },
   });
+  const fontSize = Number(svg.match(/font-size="([\d.]+)"/)[1]);
+  assert.ok(fontSize >= 32);
+  assert.deepEqual(measuredSizes, Array(4).fill(fontSize));
   const rays = pieces(svg);
   for (const ray of rays) {
     assert.match(ray[2], /fill="#abc"/);
     assert.match(ray[2], /fill="#182323"/);
+    assert.ok(Number(ray[2].match(/<image[^>]+width="([\d.]+)"/)[1]) >= 56);
     const flip = ray[2].match(/<text[^>]*rotate\((\d+)\)/)[1];
     assert.match(ray[2], new RegExp(`<image[^>]*rotate\\(${flip} `));
   }
@@ -50,7 +57,7 @@ test('radial logos face with readable labels and the upright center fits the ope
   assert.equal((svg.match(/<filter /g) || []).length, 1);
   const center = svg.match(/<image[^>]+preserveAspectRatio="xMidYMid meet"\/><\/svg>$/)[0];
   const size = Number(center.match(/width="([\d.]+)"/)[1]);
-  assert.ok(size > 90 && size / Math.SQRT2 < 76 - 11.99);
+  assert.ok(size > 140 && size / Math.SQRT2 < 112 - 11.99);
   assert.doesNotMatch(center, /transform=|filter=/);
   for (const [, id] of svg.matchAll(/url\(#([^)]+)\)/g)) assert.ok(svg.includes(`id="${id}"`));
   const automatic = pieces(renderRadialMosaic(Array.from({ length: 9 }, (_, index) => ({ name: `Tool ${index}`, ring: 1 }))));

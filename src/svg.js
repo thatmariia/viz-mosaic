@@ -10,7 +10,7 @@ export const escapeXML = value => String(value).replace(/[&<>"']/g, c => ({
 export function createImages(defs, prefix, monochrome) {
   const filters = new Set();
   return {
-    component(logo, x, y, rotation, color) {
+    component(logo, x, y, rotation, color, size = LOGO_SIZE) {
       if (!logo) return '';
       let filter = '';
       if (monochrome) {
@@ -22,7 +22,7 @@ export function createImages(defs, prefix, monochrome) {
         }
         filter = ` filter="url(#${id})"`;
       }
-      return `<image href="${escapeXML(logo)}" x="${number(x - LOGO_SIZE / 2)}" y="${number(y - LOGO_SIZE / 2)}" width="${LOGO_SIZE}" height="${LOGO_SIZE}" transform="rotate(${rotation} ${x} ${y})"${filter} preserveAspectRatio="xMidYMid meet"/>`;
+      return `<image href="${escapeXML(logo)}" x="${number(x - size / 2)}" y="${number(y - size / 2)}" width="${size}" height="${size}" transform="rotate(${rotation} ${x} ${y})"${filter} preserveAspectRatio="xMidYMid meet"/>`;
     },
     center(logo, innerRadius) {
       if (!logo) return '';
@@ -32,6 +32,6 @@ export function createImages(defs, prefix, monochrome) {
   };
 }
 
-export function svgDocument(title, prefix, extent, defs, content) {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${number(-extent)} ${number(-extent)} ${number(extent * 2)} ${number(extent * 2)}" role="img" aria-labelledby="${prefix}-title" font-family="${FONT}" font-size="${FONT_SIZE}" font-weight="500"><title id="${prefix}-title">${escapeXML(title)}</title><defs>${defs.join('')}</defs>${content.join('')}</svg>`;
+export function svgDocument(title, prefix, extent, defs, content, fontSize = FONT_SIZE) {
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${number(-extent)} ${number(-extent)} ${number(extent * 2)} ${number(extent * 2)}" role="img" aria-labelledby="${prefix}-title" font-family="${FONT}" font-size="${fontSize}" font-weight="500"><title id="${prefix}-title">${escapeXML(title)}</title><defs>${defs.join('')}</defs>${content.join('')}</svg>`;
 }
