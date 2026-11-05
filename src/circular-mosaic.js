@@ -1,4 +1,5 @@
 import { PUZZLE_GAP, puzzlePiece } from './puzzle-piece.js';
+import { assignColors, contrastColor } from './colors.js';
 
 const TAU = Math.PI * 2;
 const BAND = 64;
@@ -7,7 +8,6 @@ const FONT_SIZE = 16;
 const FONT = 'Arial, Helvetica, sans-serif';
 const LOGO_SIZE = 28;
 const GAP = 10;
-const PALETTE = ['#cf123c', '#ffd43b', '#f2a1c4', '#ff9c2c', '#0653c4', '#006b50', '#54389b'];
 let sequence = 0;
 
 const escape = value => String(value).replace(/[&<>"']/g, c => ({
@@ -48,21 +48,6 @@ function imageData(value, label) {
     throw new TypeError(`${label} has an invalid ${match[1].toUpperCase()} image signature.`);
   }
   return value;
-}
-
-function contrastColor(color) {
-  const hex = color.length === 4 ? color.slice(1).split('').map(c => c + c).join('') : color.slice(1);
-  const channels = [0, 2, 4].map(offset => {
-    const channel = parseInt(hex.slice(offset, offset + 2), 16) / 255;
-    return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
-  });
-  return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722 > 0.179 ? '#182323' : '#ffffff';
-}
-
-function categoryIndex(id) {
-  let hash = 0;
-  for (const character of String(id)) hash = (hash * 31 + character.codePointAt(0)) >>> 0;
-  return hash % PALETTE.length;
 }
 
 /** Shared validation, radial layout, labels and assets for both public renderers. */
@@ -130,19 +115,21 @@ export function renderCircularMosaic(components, options = {}, style) {
   const content = [];
   const logoFilters = new Set();
 
-  for (const [ring, entries] of [...rings].sort(([a], [b]) => a - b)) {
+  const plans = [...rings].sort(([a], [b]) => a - b).map(([ring, entries]) => {
     const radius = firstRadius + (ring - 1) * PITCH;
     const remaining = TAU - entries.reduce((sum, entry) => sum + entry.needed / radius, 0);
-    let angle = -Math.PI / 2 - 0.35;
-    const segments = entries.map((entry, index) => {
+    const offset = ((ring - 1) * Math.PI / Math.max(2, entries.length)) % TAU;
+    let angle = -Math.PI / 2 - 0.35 + offset;
+    const segments = entries.map(entry => {
       const span = entry.needed / radius + remaining / entries.length;
-      const color = entry.categoryId === undefined
-        ? PALETTE[index % PALETTE.length === 0 && index === entries.length - 1 && index > 0 ? 1 : index % PALETTE.length]
-        : colors.get(String(entry.categoryId)) ?? PALETTE[categoryIndex(entry.categoryId)];
-      const segment = { ...entry, start: angle, end: angle + span, color };
+      const segment = { ...entry, start: angle, end: angle + span };
       angle += span;
       return segment;
     });
+    return { ring, radius, offset, segments };
+  });
+  assignColors(plans, colors, BAND * 0.6);
+  for (const { ring, radius, offset, segments } of plans) {
     const bases = [];
     const joins = [];
     const labels = [];
@@ -165,7 +152,7 @@ export function renderCircularMosaic(components, options = {}, style) {
         const cap = `<circle cx="${x}" cy="${y}" r="${BAND / 2}" fill="${color}"`;
         joins.push(`<g clip-path="url(#${id}-join)">${cap} filter="url(#${idPrefix}-shadow)"/></g>${cap}/>`);
       }
-      const middle = segments.length === 1 ? -Math.PI / 2 : (start + end) / 2 + (puzzle ? 0 : BAND / (2 * radius));
+      const middle = segments.length === 1 ? -Math.PI / 2 + offset : (start + end) / 2 + (puzzle ? 0 : BAND / (2 * radius));
       const lower = Math.sin(middle) > 0;
       const direction = lower ? -1 : 1;
       const textAngle = middle + direction * (logo ? (LOGO_SIZE + GAP) / 2 : 0) / radius;
