@@ -51,3 +51,21 @@ export function renderRadialMosaic(
   components: readonly RadialMosaicComponent[],
   options?: RadialMosaicOptions,
 ): string;
+
+/** Each distance index occupies a half-turn; skipped indices remain empty. */
+export type SpiralMosaicComponent = RingMosaicComponent;
+/** Same options; default title is "Spiral mosaic". */
+export type SpiralMosaicOptions = RingMosaicOptions;
+export function renderSpiralMosaic(
+  components: readonly SpiralMosaicComponent[],
+  options?: SpiralMosaicOptions,
+): string;
+
+/** Lower ring values pack first; empty level numbers do not reserve cells. */
+export type HoneycombMosaicComponent = RingMosaicComponent;
+/** Same options; default title is "Honeycomb mosaic". */
+export type HoneycombMosaicOptions = RingMosaicOptions;
+export function renderHoneycombMosaic(
+  components: readonly HoneycombMosaicComponent[],
+  options?: HoneycombMosaicOptions,
+): string;

@@ -1,9 +1,16 @@
-import { renderRingMosaic, renderPuzzleMosaic, renderRadialMosaic } from '../src/index.js';
+import { renderRingMosaic, renderPuzzleMosaic, renderRadialMosaic, renderSpiralMosaic, renderHoneycombMosaic } from '../src/index.js';
 import { downloadDiagram } from './download.js';
 import { researchSoftwareExample } from './research-software.js';
 
 const $ = selector => document.querySelector(selector);
-const renderers = { ring: renderRingMosaic, puzzle: renderPuzzleMosaic, radial: renderRadialMosaic };
+const renderers = { ring: renderRingMosaic, puzzle: renderPuzzleMosaic, radial: renderRadialMosaic, spiral: renderSpiralMosaic, honeycomb: renderHoneycombMosaic };
+const standardPlacement = { label: 'Ring', hint: 'Ring 1 is closest to the center. Skipped rings stay empty.', summary: 'occupied rings' };
+const placements = {
+  radial: { label: 'Reach', hint: 'Reach 1 is shortest. Higher values extend farther from the center.', summary: 'reach levels' },
+  spiral: { label: 'Level', hint: 'Each level occupies a half-turn, starting near the center. Skipped levels stay empty.', summary: 'distance levels' },
+  honeycomb: { label: 'Level', hint: 'Lower levels pack first, closest to the center. Tiles pack tightly without reserving empty levels.', summary: 'priority levels' },
+};
+const placement = () => placements[visualization] ?? standardPlacement;
 let nextId = 0;
 let components = [];
 let categoryColors = [];
@@ -70,9 +77,7 @@ function render() {
     $('#error').hidden = true;
     $('#download').disabled = exampleLoading;
     const rings = new Set(components.map(component => component.ring));
-    $('#summary').textContent = visualization === 'radial'
-      ? `${components.length} components · ${rings.size} reach levels`
-      : `${components.length} components · ${rings.size} occupied rings`;
+    $('#summary').textContent = `${components.length} components · ${rings.size} ${placement().summary}`;
   } catch (error) {
     showError(`${error.message} Preview shows the last valid diagram.`);
   }
@@ -89,7 +94,7 @@ function renderRows() {
     const row = $('#component-row').content.firstElementChild.cloneNode(true);
     row.dataset.id = component.id;
     for (const field of ['name', 'ring', 'categoryId']) row.querySelector(`[data-field="${field}"]`).value = component[field] ?? '';
-    row.querySelector('[data-field="ring"]').setAttribute('aria-label', visualization === 'radial' ? 'Outward reach index' : 'Ring index');
+    row.querySelector('[data-field="ring"]').setAttribute('aria-label', `${placement().label} index`);
     row.querySelector('.logo-button').classList.toggle('has-logo', Boolean(component.logo));
     row.querySelector('.logo-button span').textContent = component.logo ? '✓' : '+';
     row.querySelector('[data-action="clear-logo"]').hidden = !component.logo;
@@ -240,12 +245,10 @@ $('.visualizations').addEventListener('click', event => {
   }
   $('#visualization-heading').textContent = name;
   $('#visualization-label').textContent = name.toLowerCase();
-  $('#placement-hint').textContent = visualization === 'radial'
-    ? 'Reach 1 is shortest. Higher values extend farther from the center.'
-    : 'Ring 1 is closest to the center. Skipped rings stay empty.';
-  $('#distance-label').textContent = visualization === 'radial' ? 'Reach' : 'Ring';
+  $('#placement-hint').textContent = placement().hint;
+  $('#distance-label').textContent = placement().label;
   for (const input of document.querySelectorAll('[data-field="ring"]')) {
-    input.setAttribute('aria-label', visualization === 'radial' ? 'Outward reach index' : 'Ring index');
+    input.setAttribute('aria-label', `${placement().label} index`);
   }
   document.title = `viz-mosaic · ${name}`;
   render();

@@ -1,0 +1,109 @@
+import { prepareInput } from './input.js';
+import { assignColors, contrastColor } from './colors.js';
+import { FONT_SIZE, LOGO_SIZE, GAP, number, escapeXML, createImages, svgDocument, shadowFilter } from './svg.js';
+
+const TAU = Math.PI * 2;
+const BAND = 64;
+const SLOPE = 84 / TAU;
+const ORIGIN = -Math.PI / 2 - 0.35;
+const path = points => points.map((p, i) => `${i ? 'L' : 'M'} ${p.map(number)}`).join(' ');
+
+function geometry(base) {
+  function at(t, offset = 0) {
+    const r = base + t * SLOPE, angle = ORIGIN + t;
+    const c = Math.cos(angle), s = Math.sin(angle), speed = Math.hypot(r, SLOPE);
+    const dx = SLOPE * c - r * s, dy = SLOPE * s + r * c;
+    return { point: [r * c - dy / speed * offset, r * s + dx / speed * offset], tangent: Math.atan2(dy, dx) };
+  }
+  function integral(t) {
+    const r = base + t * SLOPE;
+    return (r * Math.hypot(r, SLOPE) + SLOPE ** 2 * Math.asinh(r / SLOPE)) / (2 * SLOPE);
+  }
+  function advance(start, distance) {
+    let t = start + distance / Math.hypot(base + start * SLOPE, SLOPE);
+    for (let i = 0; i < 6; i++) t -= (integral(t) - integral(start) - distance) / Math.hypot(base + t * SLOPE, SLOPE);
+    return t;
+  }
+  function samples(start, end, offset = 0) {
+    const count = Math.max(2, Math.ceil(Math.abs(end - start) / 0.025));
+    return Array.from({ length: count + 1 }, (_, i) => at(start + (end - start) * i / count, offset).point);
+  }
+  return {
+    at, advance, length: (start, end) => integral(end) - integral(start),
+    curve: (start, end, offset = 0) => path(samples(start, end, offset)),
+    strip: (start, end) => `${path([...samples(start, end, -BAND / 2), ...samples(end, start, BAND / 2)])} Z`,
+  };
+}
+
+export function renderSpiralMosaic(components, options) {
+  const { entries, colors, centerLogo, title, idPrefix, monochromeLogos } = prepareInput(components, options, 'Spiral mosaic');
+  const rings = new Map();
+  for (const entry of entries) {
+    if (!rings.has(entry.ring)) rings.set(entry.ring, []);
+    rings.get(entry.ring).push({ ...entry, needed: entry.groupWidth + BAND + 16 });
+  }
+  let base = 104;
+  for (const [ring, items] of rings) {
+    base = Math.max(base, items.reduce((sum, entry) => sum + entry.needed, 0) / Math.PI - (ring - 1) * Math.PI * SLOPE);
+    if (base > 4096) throw new RangeError(`Spiral level ${ring} cannot fit within the 4096px base-radius capacity. Shorten names or use fewer components.`);
+  }
+  const plans = [...rings].sort(([a], [b]) => a - b).map(([ring, items]) => {
+    const radius = base + (ring - 1) * Math.PI * SLOPE;
+    const extra = (Math.PI - items.reduce((sum, entry) => sum + entry.needed / radius, 0)) / items.length;
+    let t = (ring - 1) * Math.PI;
+    return { ring, radius, segments: items.map(entry => {
+      const segment = { ...entry, start: t, end: t + entry.needed / radius + extra };
+      t = segment.end;
+      return segment;
+    }) };
+  });
+  const segments = plans.flatMap(plan => plan.segments), neighbors = [];
+  const connected = (a, b) => a && b && Math.abs(a.end - b.start) < 1e-8;
+  segments.forEach((segment, i) => { if (connected(segment, segments[i + 1])) neighbors.push([segment, segments[i + 1]]); });
+  for (const a of plans) for (const b of plans) {
+    if (b.ring <= a.ring || b.ring > a.ring + 3) continue;
+    const margin = BAND / 2 / a.radius + BAND / 2 / b.radius;
+    for (const first of a.segments) for (const second of b.segments) {
+      if (first.start < second.end - TAU + margin && first.end > second.start - TAU - margin) neighbors.push([first, second]);
+    }
+  }
+  assignColors(plans, colors, 0, neighbors);
+  const spiral = geometry(base), defs = [shadowFilter(idPrefix)], bodies = [], joins = [], labels = [];
+  const images = createImages(defs, idPrefix, monochromeLogos);
+  const cap = (t, color, filter = '') => {
+    const [x, y] = spiral.at(t).point.map(number);
+    return `<circle cx="${x}" cy="${y}" r="${BAND / 2}" fill="${color}"${filter}/>`;
+  };
+  segments.forEach((segment, i) => {
+    const { name, ring, categoryId, color, logo, width, start, end } = segment;
+    const id = `${idPrefix}-s${i}`, textColor = contrastColor(color);
+    const category = categoryId === undefined ? '' : ` data-category-id="${escapeXML(categoryId)}"`;
+    const outline = spiral.strip(start, end);
+    bodies.push(`<g data-component="${escapeXML(name)}" data-ring="${ring}" data-start="${number(start)}" data-end="${number(end)}"${category}><path d="${outline}" fill="${color}"/></g>`);
+    if (!connected(segments[i - 1], segment)) bodies.push(cap(start, color));
+    const next = segments[i + 1];
+    if (connected(segment, next)) {
+      defs.push(`<clipPath id="${id}-join"><path d="${spiral.strip(next.start, next.end)}"/></clipPath>`);
+      joins.push(`<g data-spiral-join="" clip-path="url(#${id}-join)">${cap(end, color, ` filter="url(#${idPrefix}-shadow)"`)}</g>`);
+    }
+    joins.push(cap(end, color));
+    const length = spiral.length(start, end);
+    const middle = spiral.advance(start, length / 2 + (connected(segments[i - 1], segment) ? BAND / 2 : 0));
+    const direction = Math.cos(spiral.at(middle).tangent) < 0 ? -1 : 1;
+    const textMiddle = spiral.advance(middle, direction * (logo ? (LOGO_SIZE + GAP) / 2 : 0));
+    const half = width / 2 + 16;
+    const from = spiral.advance(textMiddle, -direction * half), to = spiral.advance(textMiddle, direction * half);
+    defs.push(`<path id="${id}-label" d="${spiral.curve(from, to, direction * FONT_SIZE * 0.33)}"/>`);
+    let image = '';
+    if (logo) {
+      const t = spiral.advance(middle, -direction * (width + GAP) / 2);
+      const { point: [x, y], tangent } = spiral.at(t);
+      image = images.component(logo, number(x), number(y), number((tangent + (direction < 0 ? Math.PI : 0)) * 180 / Math.PI), textColor);
+    }
+    labels.push(`<g data-label-for="${escapeXML(name)}">${image}<text fill="${textColor}" text-anchor="middle" xml:space="preserve"><textPath href="#${id}-label" startOffset="50%">${escapeXML(name)}</textPath></text></g>`);
+  });
+  const maxRing = Math.max(0, ...rings.keys());
+  const extent = maxRing ? base + maxRing * Math.PI * SLOPE + BAND / 2 + 12 : 86;
+  const inner = maxRing ? base + (Math.min(...rings.keys()) - 1) * Math.PI * SLOPE - BAND / 2 : 86;
+  return svgDocument(title, idPrefix, extent, defs, [...bodies, ...joins, ...labels, images.center(centerLogo, inner)]);
+}

@@ -30,7 +30,7 @@ function categoryColor(id) {
   return PALETTE[hash % PALETTE.length];
 }
 
-export function assignColors(plans, overrides, reach) {
+export function assignColors(plans, overrides, reach, neighbors) {
   const nodes = new Map();
   const owners = new Map();
   for (const plan of plans) for (const [index, segment] of plan.segments.entries()) {
@@ -47,7 +47,8 @@ export function assignColors(plans, overrides, reach) {
     first.neighbors.add(second);
     second.neighbors.add(first);
   }
-  for (const [index, plan] of plans.entries()) {
+  if (neighbors) for (const [a, b] of neighbors) connect(a, b);
+  else for (const [index, plan] of plans.entries()) {
     if (plan.segments.length > 1) plan.segments.forEach((segment, i) => connect(segment, plan.segments[(i + 1) % plan.segments.length]));
     const next = plans[index + 1];
     if (!next || next.ring !== plan.ring + 1) continue;

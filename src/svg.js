@@ -35,3 +35,7 @@ export function createImages(defs, prefix, monochrome) {
 export function svgDocument(title, prefix, extent, defs, content, fontSize = FONT_SIZE) {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${number(-extent)} ${number(-extent)} ${number(extent * 2)} ${number(extent * 2)}" role="img" aria-labelledby="${prefix}-title" font-family="${FONT}" font-size="${fontSize}" font-weight="500"><title id="${prefix}-title">${escapeXML(title)}</title><defs>${defs.join('')}</defs>${content.join('')}</svg>`;
 }
+
+export function shadowFilter(prefix) {
+  return `<filter id="${prefix}-shadow" x="-50%" y="-50%" width="200%" height="200%" color-interpolation-filters="sRGB"><feDropShadow dx="0" dy="0" stdDeviation="4.5" flood-opacity="0.32"/></filter>`;
+}
