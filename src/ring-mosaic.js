@@ -1,11 +1,11 @@
 const TAU = Math.PI * 2;
 const BAND = 64;
-const PITCH = 84;
+const PITCH = BAND;
 const FONT_SIZE = 16;
 const FONT = 'Arial, Helvetica, sans-serif';
 const LOGO_SIZE = 28;
 const GAP = 10;
-const PALETTE = ['#426a5a', '#527b9b', '#a45d45', '#776493', '#9b7434', '#397d80'];
+const PALETTE = ['#cf123c', '#ffd43b', '#f2a1c4', '#ff9c2c', '#0653c4', '#006b50', '#54389b'];
 let sequence = 0;
 
 const escape = value => String(value).replace(/[&<>"']/g, c => ({
@@ -103,11 +103,11 @@ export function renderRingMosaic(components, options = {}) {
     if (!Number.isFinite(width) || width <= 0) throw new TypeError(`${label}: measureText must return a positive finite width.`);
     const groupWidth = width + (logo ? LOGO_SIZE + GAP : 0);
     if (!rings.has(ring)) rings.set(ring, []);
-    rings.get(ring).push({ name, logo, categoryId, width, groupWidth, needed: groupWidth + BAND + 24 });
+    rings.get(ring).push({ name, logo, categoryId, width, groupWidth, needed: groupWidth + BAND / 2 + 24 });
   });
 
   // Grow the center clearance, keeping pitch and the user's distance indices intact.
-  let firstRadius = 118;
+  let firstRadius = 88;
   for (const [ring, entries] of rings) {
     const required = Math.max(
       entries.reduce((sum, entry) => sum + entry.needed, 0) / TAU,
@@ -120,13 +120,13 @@ export function renderRingMosaic(components, options = {}) {
   }
   const maxRing = Math.max(0, ...rings.keys());
   const extent = maxRing ? firstRadius + (maxRing - 1) * PITCH + BAND / 2 + 12 : 86;
-  const defs = [`<filter id="${idPrefix}-shadow" x="-50%" y="-50%" width="200%" height="200%" color-interpolation-filters="sRGB"><feDropShadow dx="0" dy="0" stdDeviation="3" flood-opacity="0.3"/></filter>`];
+  const defs = [`<filter id="${idPrefix}-shadow" x="-50%" y="-50%" width="200%" height="200%" color-interpolation-filters="sRGB"><feDropShadow dx="0" dy="0" stdDeviation="4.5" flood-opacity="0.32"/></filter>`];
   const content = [];
 
   for (const [ring, entries] of [...rings].sort(([a], [b]) => a - b)) {
     const radius = firstRadius + (ring - 1) * PITCH;
     const remaining = TAU - entries.reduce((sum, entry) => sum + entry.needed / radius, 0);
-    let angle = -Math.PI / 2;
+    let angle = -Math.PI / 2 - 0.35;
     const segments = entries.map((entry, index) => {
       const span = entry.needed / radius + remaining / entries.length;
       const color = entry.categoryId === undefined
@@ -149,13 +149,13 @@ export function renderRingMosaic(components, options = {}) {
       bases.push(`<g data-component="${escape(name)}"${category}>${base}</g>`);
       if (segments.length > 1) {
         // Every join is a separate pass, including the last-to-first join. Clip
-        // shadows to the preceding strip so they merge cleanly into this strip.
-        defs.push(`<clipPath id="${id}-join"><path d="${sector(radius, start - BAND * 1.5 / radius, start)}"/></clipPath>`);
-        const [x, y] = point(radius, start);
+        // shadows to the following strip so they merge cleanly into this strip.
+        defs.push(`<clipPath id="${id}-join"><path d="${sector(radius, end, end + BAND * 1.5 / radius)}"/></clipPath>`);
+        const [x, y] = point(radius, end);
         const cap = `<circle cx="${x}" cy="${y}" r="${BAND / 2}" fill="${color}"`;
         joins.push(`<g clip-path="url(#${id}-join)">${cap} filter="url(#${idPrefix}-shadow)"/></g>${cap}/>`);
       }
-      const middle = segments.length === 1 ? -Math.PI / 2 : (start + end) / 2 - BAND / (2 * radius);
+      const middle = segments.length === 1 ? -Math.PI / 2 : (start + end) / 2 + BAND / (2 * radius);
       const lower = Math.sin(middle) > 0;
       const direction = lower ? -1 : 1;
       const textAngle = middle + direction * (logo ? (LOGO_SIZE + GAP) / 2 : 0) / radius;
@@ -171,6 +171,6 @@ export function renderRingMosaic(components, options = {}) {
     });
     content.push(`<g data-ring="${ring}" data-radius="${number(radius)}">${bases.join('')}${joins.join('')}${labels.join('')}</g>`);
   }
-  if (centerLogo) content.push(`<image href="${escape(centerLogo)}" x="-46" y="-46" width="92" height="92" preserveAspectRatio="xMidYMid meet"/>`);
+  if (centerLogo) content.push(`<image href="${escape(centerLogo)}" x="-24" y="-24" width="48" height="48" preserveAspectRatio="xMidYMid meet"/>`);
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${number(-extent)} ${number(-extent)} ${number(extent * 2)} ${number(extent * 2)}" role="img" aria-labelledby="${idPrefix}-title" font-family="${FONT}" font-size="${FONT_SIZE}" font-weight="500"><title id="${idPrefix}-title">${escape(title)}</title><defs>${defs.join('')}</defs>${content.join('')}</svg>`;
 }

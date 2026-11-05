@@ -8,9 +8,9 @@ const radius = svg => Number(svg.match(/data-radius="([\d.]+)"/)[1]);
 test('ring indices remain distances, including when only ring 4 is occupied', () => {
   const svg = renderRingMosaic([1, 2, 4].map(ring => ({ name: `Ring ${ring}`, ring })));
   assert.deepEqual([...svg.matchAll(/data-ring="(\d+)"/g)].map(match => Number(match[1])), [1, 2, 4]);
-  assert.deepEqual([...svg.matchAll(/data-radius="([\d.]+)"/g)].map(match => Number(match[1])), [118, 202, 370]);
-  assert.equal(radius(renderRingMosaic([{ name: 'Outer', ring: 4 }])), 370);
-  assert.match(svg, /<circle r="370"/);
+  assert.deepEqual([...svg.matchAll(/data-radius="([\d.]+)"/g)].map(match => Number(match[1])), [88, 152, 280]);
+  assert.equal(radius(renderRingMosaic([{ name: 'Outer', ring: 4 }])), 280);
+  assert.match(svg, /<circle r="280"/);
 });
 
 test('groups rings in distance order and preserves component order inside each ring', () => {
@@ -25,7 +25,7 @@ test('groups rings in distance order and preserves component order inside each r
 test('dense rings grow without changing ring numbers and extreme density explains the limit', () => {
   const components = Array.from({ length: 35 }, (_, i) => ({ name: `Component ${i}`, ring: 1 }));
   const svg = renderRingMosaic(components);
-  assert.ok(radius(svg) > 118);
+  assert.ok(radius(svg) > 88);
   assert.equal((svg.match(/<textPath /g) || []).length, 35);
   assert.throws(() => renderRingMosaic([{ name: 'Long '.repeat(3000), ring: 1 }]), /Ring 1 cannot fit.*capacity/);
 });
@@ -94,7 +94,7 @@ test('measurement callback receives font size, changes layout and must return us
     assert.equal(size, 16);
     return 1000;
   } });
-  assert.ok(radius(svg) > 118);
+  assert.ok(radius(svg) > 88);
   for (const value of [0, -10, NaN, Infinity, '100']) {
     assert.throws(() => renderRingMosaic(input, { measureText: () => value }), /positive finite width/);
   }
