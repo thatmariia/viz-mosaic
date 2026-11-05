@@ -16,7 +16,7 @@ function rayPath(inner, outer, tip, cap) {
   return `M ${point(inner, tip, -1)} L ${point(outer, cap, -1)} A ${number(cap)} ${number(cap)} 0 1 1 ${point(outer, cap, 1)} L ${point(inner, tip, 1)} A ${number(tip)} ${number(tip)} 0 0 1 ${point(inner, tip, -1)} Z`;
 }
 
-export function renderRadialLayout(entries, { colors, centerLogo, title, idPrefix, monochromeLogos }) {
+export function renderRadialLayout(entries, { colors, palette, centerLogo, title, idPrefix, monochromeLogos }) {
   const halfAngle = Math.PI / Math.max(3, entries.length);
   const sine = Math.sin(halfAngle), cosine = Math.cos(halfAngle);
   const innerRadius = Math.max(112, (MIN_TIP + 3) / sine - MIN_TIP);
@@ -38,7 +38,7 @@ export function renderRadialLayout(entries, { colors, centerLogo, title, idPrefi
   const segments = entries.map((entry, index) => ({
     ...entry, start: index * TAU / entries.length, end: (index + 1) * TAU / entries.length,
   }));
-  assignColors([{ ring: 1, radius: firstRadius, segments }], colors, 0);
+  assignColors([{ ring: 1, radius: firstRadius, segments }], colors, 0, undefined, palette);
   const defs = [];
   const content = [];
   const images = createImages(defs, idPrefix, monochromeLogos);

@@ -1,6 +1,7 @@
 import { renderRingMosaic, renderPuzzleMosaic, renderRadialMosaic, renderSpiralMosaic, renderHoneycombMosaic, renderSpiralPuzzleMosaic } from '../src/index.js';
 import { downloadDiagram } from './download.js';
 import { researchSoftwareExample } from './research-software.js';
+import { PALETTES } from '../src/palettes.js';
 
 const $ = selector => document.querySelector(selector);
 const renderers = { ring: renderRingMosaic, puzzle: renderPuzzleMosaic, radial: renderRadialMosaic, spiral: renderSpiralMosaic, honeycomb: renderHoneycombMosaic, 'spiral-puzzle': renderSpiralPuzzleMosaic };
@@ -68,6 +69,7 @@ function render() {
       centerLogo,
       monochromeLogos: true,
       categoryColors: colors,
+      palette: $('#palette').value,
       idPrefix: 'preview',
       measureText: (name, fontSize) => {
         context.font = `500 ${fontSize}px Arial, Helvetica, sans-serif`;
@@ -101,6 +103,18 @@ function renderRows() {
     row.querySelector('[data-action="clear-logo"]').hidden = !component.logo;
     row.querySelector('[data-action="remove"]').setAttribute('aria-label', `Remove ${component.name || 'component'}`);
     return row;
+  }));
+}
+
+function renderPalette() {
+  const select = $('#palette'), colors = PALETTES[select.value];
+  $('#palette-swatches').setAttribute('aria-label', `${select.selectedOptions[0].textContent}: ${colors.join(', ')}`);
+  $('#palette-swatches').replaceChildren(...colors.map(color => {
+    const swatch = document.createElement('span');
+    swatch.style.backgroundColor = color;
+    swatch.title = color.toUpperCase();
+    swatch.setAttribute('aria-hidden', 'true');
+    return swatch;
   }));
 }
 
@@ -236,6 +250,7 @@ $('#add-color').addEventListener('click', () => {
 });
 
 $('#title').addEventListener('input', render);
+$('#palette').addEventListener('change', () => { renderPalette(); render(); });
 $('.visualizations').addEventListener('click', event => {
   const button = event.target.closest('[data-visualization]');
   if (!button) return;
@@ -277,4 +292,5 @@ $('#download').addEventListener('click', async () => {
   catch (error) { showError(error.message); return; }
   $('#download').disabled = !$('#error').hidden;
 });
+renderPalette();
 reset();

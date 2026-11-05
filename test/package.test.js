@@ -15,7 +15,7 @@ test('packed package installs offline and exposes the public import and declarat
     assert.ok(pack.files.some(file => file.path === 'types/index.d.ts'));
     assert.ok(!pack.files.some(file => file.path.startsWith('test/')));
     execFileSync('npm', ['install', join(temporary, pack.filename), '--prefix', temporary, '--offline', '--ignore-scripts', '--no-audit', '--no-fund', '--cache', cache], { encoding: 'utf8' });
-    const svgs = JSON.parse(execFileSync(process.execPath, ['--input-type=module', '-e', "import * as renderers from 'viz-mosaic'; console.log(JSON.stringify(Object.values(renderers).map(render=>render([{name:'Consumer',ring:4,categoryId:1}],{categoryColors:{1:'#abc'}}))));"], { cwd: temporary, encoding: 'utf8' }));
+    const svgs = JSON.parse(execFileSync(process.execPath, ['--input-type=module', '-e', "import * as renderers from 'viz-mosaic'; console.log(JSON.stringify(Object.values(renderers).map(render=>render([{name:'Consumer',ring:4,categoryId:1}],{palette:'palette-2',categoryColors:{1:'#abc'}}))));"], { cwd: temporary, encoding: 'utf8' }));
     assert.equal(svgs.length, 6);
     for (const svg of svgs) {
       assert.match(svg, /data-ring="4"/);

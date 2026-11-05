@@ -17,6 +17,8 @@ Open <http://127.0.0.1:3000/demo/>. Set `PORT=3001` to use another port. Choose 
 
 The demo opens with a **Research software ecosystem** example using nine named tool logos and the ecosystem center logo. Three rings express an educated priority guess; automatic colors favor contrasting neighbors. The [source assessment and placement rationale](docs/research-software-example.md) explains the documented relationships and editorial choices.
 
+The **Palette** selector offers Original, Palette 1 (six colors), and Palette 2 (ten colors), with swatches. The selected palette stays active when switching views or resetting examples. Custom category colors override it. In code, pass `{ palette: 'palette-1' }` or `{ palette: 'palette-2' }` to any renderer; automatic assignment continues to favor contrasting neighbors.
+
 SVG preserves vector geometry and embedded images. PNG uses a transparent background; JPEG uses white. Browser raster exports use twice the SVG dimensions, capped at 4,096 pixels per side. The public renderer always returns SVG; raster conversion stays in the demo's browser code.
 
 ## Render a mosaic
@@ -108,6 +110,7 @@ Tiles fill the nearest available hexagonal rings, with any partial outer ring di
 | `centerLogo` | Optional base64 PNG or JPEG data URL, centered and upright. |
 | `monochromeLogos` | Optional boolean, default `false`. Tint component marks to their label color and turn white details into transparent cutouts. The demo enables it. |
 | `categoryColors` | Optional object mapping category IDs to opaque `#rgb` or `#rrggbb` colors. |
+| `palette` | Automatic palette: `classic` (default), `palette-1` (6 colors), or `palette-2` (10 colors). Custom category colors take priority. |
 | `idPrefix` | Optional stable ID prefix, starting with a letter and containing letters, digits, `_`, `.`, or `-`. Supply a **distinct prefix per inline diagram**. Defaults are unique per render. |
 | `measureText(name, fontSize)` | Optional callback returning a positive finite width in SVG pixels. Uses Arial, Helvetica, or sans-serif at weight 500. |
 

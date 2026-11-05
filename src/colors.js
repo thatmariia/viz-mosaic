@@ -1,4 +1,5 @@
-const PALETTE = ['#cf123c', '#ffd43b', '#f2a1c4', '#ff9c2c', '#0653c4', '#006b50', '#54389b'];
+import { PALETTES } from './palettes.js';
+
 const TAU = Math.PI * 2;
 const normalize = color => color.length === 4 ? '#'+color.slice(1).split('').map(c => c+c).join('').toLowerCase() : color.toLowerCase();
 
@@ -24,20 +25,20 @@ function lab(color) {
   return [116 * y - 16, 500 * (x - y), 200 * (y - z)];
 }
 
-function categoryColor(id) {
+function categoryColor(id, palette) {
   let hash = 0;
   for (const character of String(id)) hash = (hash * 31 + character.codePointAt(0)) >>> 0;
-  return PALETTE[hash % PALETTE.length];
+  return palette[hash % palette.length];
 }
 
-export function assignColors(plans, overrides, reach, neighbors) {
+export function assignColors(plans, overrides, reach, neighbors, palette = PALETTES.classic) {
   const nodes = new Map();
   const owners = new Map();
   for (const plan of plans) for (const [index, segment] of plan.segments.entries()) {
     const key = segment.categoryId === undefined ? segment : `category:${segment.categoryId}`;
     if (!nodes.has(key)) {
       const fixed = segment.categoryId === undefined ? undefined : overrides.get(String(segment.categoryId));
-      nodes.set(key, { color: fixed, fixed: fixed !== undefined, preferred: segment.categoryId === undefined ? PALETTE[index % PALETTE.length] : categoryColor(segment.categoryId), neighbors: new Set() });
+      nodes.set(key, { color: fixed, fixed: fixed !== undefined, preferred: segment.categoryId === undefined ? palette[index % palette.length] : categoryColor(segment.categoryId, palette), neighbors: new Set() });
     }
     owners.set(segment, nodes.get(key));
   }
@@ -82,7 +83,7 @@ export function assignColors(plans, overrides, reach, neighbors) {
   function choose(node) {
     let best = node.color ?? node.preferred;
     let bestScore = score(node, best);
-    for (const color of PALETTE) {
+    for (const color of palette) {
       const candidate = score(node, color);
       if (candidate.repeats < bestScore.repeats || (candidate.repeats === bestScore.repeats && (candidate.minimum > bestScore.minimum + 1e-6 || (Math.abs(candidate.minimum - bestScore.minimum) < 1e-6 && candidate.total > bestScore.total + 1e-6)))) {
         best = color;
@@ -96,7 +97,7 @@ export function assignColors(plans, overrides, reach, neighbors) {
   if (first?.neighbors.size && ![...first.neighbors].some(node => node.color)) {
     // Seed with the widest palette contrast instead of a weak local color pair.
     let widest = -1;
-    for (const a of PALETTE) for (const b of PALETTE) {
+    for (const a of palette) for (const b of palette) {
       const distance = separation(a, b);
       if (distance > widest) { widest = distance; first.color = a; }
     }

@@ -1,8 +1,45 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { renderRingMosaic, renderPuzzleMosaic } from '../src/index.js';
+import { renderRingMosaic, renderPuzzleMosaic, renderRadialMosaic, renderSpiralMosaic, renderSpiralPuzzleMosaic, renderHoneycombMosaic } from '../src/index.js';
 
 const fills = svg => new Map([...svg.matchAll(/<g data-component="([^"]+)"[^>]*><path[^>]+fill="([^"]+)"/g)].map(match => [match[1], match[2]]));
+const renderers = [renderRingMosaic, renderPuzzleMosaic, renderRadialMosaic, renderSpiralMosaic, renderSpiralPuzzleMosaic, renderHoneycombMosaic];
+
+test('supplied palette presets work in all views and preserve the original default', () => {
+  const palettes = {
+    'palette-1': ['#FF9A4A', '#1F4B6B', '#CFD24F', '#BB424A', '#84BFFD', '#4BAE87'],
+    'palette-2': ['#3CBA77', '#FF7BAC', '#3D69DD', '#FED255', '#64E9D1', '#F87553', '#7C7FD3', '#FF8C29', '#5DB1F7', '#BCBD42'],
+  };
+  const components = [1, 2, 3].flatMap(ring => [0, 1, 2].map(index => ({ name: `${ring}-${index}`, ring, categoryId: index === 0 ? 0 : undefined })));
+  for (const render of renderers) {
+    assert.equal(render(components, { idPrefix: 'default' }), render(components, { palette: 'classic', idPrefix: 'default' }));
+    for (const [palette, expected] of Object.entries(palettes)) {
+      const options = { palette, idPrefix: 'preset' };
+      const svg = render(components, options), colors = fills(svg);
+      assert.equal(colors.size, 9);
+      assert.ok([...colors.values()].every(color => expected.includes(color)));
+      assert.equal(colors.get('1-0'), colors.get('3-0'));
+      assert.ok(new Set(colors.values()).size > 1);
+      assert.equal(render(components, options), svg);
+    }
+  }
+});
+
+test('category overrides take priority over presets and invalid palette names are rejected', () => {
+  const components = Object.freeze([
+    Object.freeze({ name: 'Pinned', ring: 1, categoryId: 0 }), Object.freeze({ name: 'Auto', ring: 1 }),
+    Object.freeze({ name: 'Same category', ring: 2, categoryId: '0' }), Object.freeze({ name: 'Other auto', ring: 2 }),
+  ]);
+  for (const render of renderers) {
+    for (const palette of ['palette-1', 'palette-2']) {
+      const colors = fills(render(components, { palette, categoryColors: Object.freeze({ 0: '#123456' }) }));
+      assert.equal(colors.get('Pinned'), '#123456');
+      assert.equal(colors.get('Same category'), '#123456');
+      assert.notEqual(colors.get('Auto'), '#123456');
+    }
+    for (const palette of ['', 'unknown', '__proto__', null, []]) assert.throws(() => render([], { palette }), /palette must be/);
+  }
+});
 
 test('automatic colors avoid equal circular and cross-ring neighbors, including wraparound', () => {
   const components = [1, 2, 3].flatMap(ring => [0, 1, 2].map(index => ({ name: `${ring}-${index}`, ring })));

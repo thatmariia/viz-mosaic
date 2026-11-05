@@ -22,7 +22,7 @@ function sector(radius, start, end, band) {
 export function renderCircularMosaic(components, options = {}, style) {
   const puzzle = style === 'puzzle';
   const band = puzzle ? 64 : 52;
-  const { entries, colors, centerLogo, title, idPrefix } = prepareInput(components, options, style === 'radial' ? 'Radial mosaic' : puzzle ? 'Puzzle mosaic' : 'Ring mosaic', style === 'radial' ? RADIAL_FONT_SIZE : FONT_SIZE);
+  const { entries, colors, palette, centerLogo, title, idPrefix } = prepareInput(components, options, style === 'radial' ? 'Radial mosaic' : puzzle ? 'Puzzle mosaic' : 'Ring mosaic', style === 'radial' ? RADIAL_FONT_SIZE : FONT_SIZE);
   const rings = new Map();
   for (const entry of entries) {
     if (!rings.has(entry.ring)) rings.set(entry.ring, []);
@@ -31,7 +31,7 @@ export function renderCircularMosaic(components, options = {}, style) {
 
   if (style === 'radial') {
     const entries = [...rings.values()].flat().sort((a, b) => a.order - b.order);
-    return renderRadialLayout(entries, { colors, centerLogo, title, idPrefix, monochromeLogos: options.monochromeLogos });
+    return renderRadialLayout(entries, { colors, palette, centerLogo, title, idPrefix, monochromeLogos: options.monochromeLogos });
   }
 
   // Grow the center clearance, keeping pitch and the user's distance indices intact.
@@ -65,7 +65,7 @@ export function renderCircularMosaic(components, options = {}, style) {
     });
     return { ring, radius, offset, segments };
   });
-  assignColors(plans, colors, Math.max(band / 2, puzzle ? PUZZLE_JOIN_REACH : 0));
+  assignColors(plans, colors, Math.max(band / 2, puzzle ? PUZZLE_JOIN_REACH : 0), undefined, palette);
   for (const { ring, radius, offset, segments } of plans) {
     const bases = [];
     const joins = [];

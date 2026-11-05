@@ -1,4 +1,5 @@
 import { FONT_SIZE, LOGO_SIZE, GAP } from './svg.js';
+import { PALETTES } from './palettes.js';
 
 let sequence = 0;
 
@@ -30,7 +31,8 @@ export function prepareInput(components, options = {}, defaultTitle, fontSize = 
   if (!Array.isArray(components)) throw new TypeError('components must be an array.');
   if (!options || typeof options !== 'object' || Array.isArray(options)) throw new TypeError('options must be an object.');
   if (components.length > 10000) throw new RangeError('Use at most 10000 components per mosaic.');
-  const { title = defaultTitle, idPrefix = `viz-${++sequence}-${Math.random().toString(36).slice(2)}`, categoryColors = {}, measureText = estimateWidth } = options;
+  const { title = defaultTitle, idPrefix = `viz-${++sequence}-${Math.random().toString(36).slice(2)}`, categoryColors = {}, palette = 'classic', measureText = estimateWidth } = options;
+  if (typeof palette !== 'string' || !Object.hasOwn(PALETTES, palette)) throw new TypeError('palette must be "classic", "palette-1", or "palette-2".');
   if (typeof title !== 'string' || !title.trim()) throw new TypeError('title must be a nonempty string.');
   if (typeof idPrefix !== 'string' || !/^[A-Za-z][\w.-]*$/.test(idPrefix)) {
     throw new TypeError('idPrefix must start with a letter and contain only letters, digits, underscores, dots, or hyphens.');
@@ -70,5 +72,5 @@ export function prepareInput(components, options = {}, defaultTitle, fontSize = 
     entries.push({ name, ring, order: index, logo, categoryId, width, groupWidth });
   });
 
-  return { entries, colors, centerLogo, title, idPrefix, monochromeLogos: options.monochromeLogos };
+  return { entries, colors, palette: PALETTES[palette], centerLogo, title, idPrefix, monochromeLogos: options.monochromeLogos };
 }

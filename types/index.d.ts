@@ -1,5 +1,6 @@
 /** Numeric and string IDs with the same spelling share a category. */
 export type CategoryId = string | number;
+export type MosaicPalette = 'classic' | 'palette-1' | 'palette-2';
 
 export interface RingMosaicComponent {
   name: string;
@@ -21,6 +22,8 @@ export interface RingMosaicOptions {
   idPrefix?: string;
   /** Optional category overrides, as opaque #rgb or #rrggbb colors. */
   categoryColors?: Readonly<Record<string, string>>;
+  /** Automatic color palette. Defaults to "classic"; category overrides take priority. */
+  palette?: MosaicPalette;
   /** Width in SVG pixels, using Arial at the supplied font size and weight 500. */
   measureText?: (name: string, fontSize: number) => number;
 }

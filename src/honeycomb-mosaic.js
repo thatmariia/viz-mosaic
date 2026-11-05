@@ -33,7 +33,7 @@ function hexagon(radius) {
 }
 
 export function renderHoneycombMosaic(components, options) {
-  const { entries, colors, centerLogo, title, idPrefix, monochromeLogos } = prepareInput(components, options, 'Honeycomb mosaic');
+  const { entries, colors, palette, centerLogo, title, idPrefix, monochromeLogos } = prepareInput(components, options, 'Honeycomb mosaic');
   const ordered = [...entries].sort((a, b) => a.ring - b.ring || a.order - b.order);
   const radius = Math.max(56, ...entries.map(entry => (entry.width + 24) / ROOT3));
   const spacing = radius + GAP / ROOT3;
@@ -55,7 +55,7 @@ export function renderHoneycombMosaic(components, options) {
     const neighbor = cells.get(key(tile.q + dq, tile.r + dr));
     if (neighbor) neighbors.push([tile, neighbor]);
   }
-  assignColors([{ segments: tiles }], colors, 0, neighbors);
+  assignColors([{ segments: tiles }], colors, 0, neighbors, palette);
   const { path, vertices } = hexagon(radius), defs = [], content = [];
   const images = createImages(defs, idPrefix, monochromeLogos);
   let inner = Infinity, extent = 0;

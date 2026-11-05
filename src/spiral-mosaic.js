@@ -38,7 +38,7 @@ function geometry(base) {
 }
 
 export function renderSpiralLayout(components, options, puzzle = false) {
-  const { entries, colors, centerLogo, title, idPrefix, monochromeLogos } = prepareInput(components, options, puzzle ? 'Spiral puzzle mosaic' : 'Spiral mosaic');
+  const { entries, colors, palette, centerLogo, title, idPrefix, monochromeLogos } = prepareInput(components, options, puzzle ? 'Spiral puzzle mosaic' : 'Spiral mosaic');
   const rings = new Map();
   for (const entry of entries) {
     if (!rings.has(entry.ring)) rings.set(entry.ring, []);
@@ -74,7 +74,7 @@ export function renderSpiralLayout(components, options, puzzle = false) {
       if (first.start < second.end - TAU + margin && first.end > second.start - TAU - margin) neighbors.push([first, second]);
     }
   }
-  assignColors(plans, colors, 0, neighbors);
+  assignColors(plans, colors, 0, neighbors, palette);
   const spiral = geometry(base), defs = puzzle ? [] : [shadowFilter(idPrefix)], bodies = [], joins = [], labels = [];
   const images = createImages(defs, idPrefix, monochromeLogos);
   const cap = (t, color, filter = '') => {
