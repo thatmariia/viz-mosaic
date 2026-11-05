@@ -21,7 +21,7 @@ test('automatic colors avoid equal circular and cross-ring neighbors, including 
 
 test('automatic colors favor perceptual contrast while category overrides remain exact', () => {
   for (const render of [renderRingMosaic, renderPuzzleMosaic]) {
-    const automatic = render([{ name: 'A', ring: 1 }, { name: 'B', ring: 1 }]);
+    const automatic = render([{ name: 'A', ring: 1 }, { name: 'B', ring: 1 }, { name: 'C', ring: 1 }]);
     const textColors = new Set([...automatic.matchAll(/<text fill="([^"]+)"/g)].map(match => match[1]));
     assert.equal(textColors.size, 2);
     const explicit = fills(render([

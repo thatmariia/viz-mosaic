@@ -23,7 +23,7 @@ export function sampleCurve(curve, points) {
   sampleCurve(right, points);
 }
 
-export function insetPath(outline, distance) {
+export function insetShape(outline, distance) {
   const points = outline.filter((point, index) => !index || Math.hypot(point[0] - outline[index - 1][0], point[1] - outline[index - 1][1]) > 1e-7);
   if (Math.hypot(points[0][0] - points.at(-1)[0], points[0][1] - points.at(-1)[1]) < 1e-7) points.pop();
   const area = points.reduce((sum, point, index) => {
@@ -45,5 +45,8 @@ export function insetPath(outline, distance) {
     return [point[0] + (previous[0] + next[0]) * scale, point[1] + (previous[1] + next[1]) * scale];
   });
   // Quadratic segments keep the closely sampled outline smoothly rounded.
-  return `M ${coordinates(midpoint(inset.at(-1), inset[0]))} ${inset.map((point, index) => `Q ${coordinates(point)} ${coordinates(midpoint(point, inset[(index + 1) % inset.length]))}`).join(' ')} Z`;
+  return {
+    path: `M ${coordinates(midpoint(inset.at(-1), inset[0]))} ${inset.map((point, index) => `Q ${coordinates(point)} ${coordinates(midpoint(point, inset[(index + 1) % inset.length]))}`).join(' ')} Z`,
+    outline: inset,
+  };
 }

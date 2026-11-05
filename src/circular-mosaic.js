@@ -1,4 +1,4 @@
-import { PUZZLE_GAP, puzzlePiece } from './puzzle-piece.js';
+import { PUZZLE_GAP, PUZZLE_JOIN_REACH, puzzlePiece } from './puzzle-piece.js';
 import { assignColors, contrastColor } from './colors.js';
 
 const TAU = Math.PI * 2;
@@ -94,7 +94,7 @@ export function renderCircularMosaic(components, options = {}, style) {
     if (!Number.isFinite(width) || width <= 0) throw new TypeError(`${label}: measureText must return a positive finite width.`);
     const groupWidth = width + (logo ? LOGO_SIZE + GAP : 0);
     if (!rings.has(ring)) rings.set(ring, []);
-    rings.get(ring).push({ name, logo, categoryId, width, groupWidth, needed: groupWidth + BAND / 2 + (puzzle ? 44 : 24) });
+    rings.get(ring).push({ name, logo, categoryId, width, groupWidth, needed: groupWidth + (puzzle ? PUZZLE_JOIN_REACH * 2 : BAND / 2) + 24 });
   });
 
   // Grow the center clearance, keeping pitch and the user's distance indices intact.
@@ -128,7 +128,7 @@ export function renderCircularMosaic(components, options = {}, style) {
     });
     return { ring, radius, offset, segments };
   });
-  assignColors(plans, colors, BAND * 0.6);
+  assignColors(plans, colors, Math.max(BAND / 2, puzzle ? PUZZLE_JOIN_REACH : 0));
   for (const { ring, radius, offset, segments } of plans) {
     const bases = [];
     const joins = [];
@@ -140,9 +140,10 @@ export function renderCircularMosaic(components, options = {}, style) {
       const category = categoryId === undefined ? '' : ` data-category-id="${escape(categoryId)}"`;
       const startVariant = ring + index;
       const endVariant = ring + (index + 1) % segments.length;
+      const piece = puzzle && segments.length > 1 ? puzzlePiece(radius, start, end, startVariant, endVariant) : undefined;
       const base = segments.length === 1
         ? `<circle r="${number(radius)}" fill="none" stroke="${color}" stroke-width="${puzzle ? BAND - PUZZLE_GAP : BAND}"/>`
-        : `<path${puzzle ? ' data-puzzle-piece=""' : ''} d="${puzzle ? puzzlePiece(radius, start, end, startVariant, endVariant) : sector(radius, start, end)}" fill="${color}"/>`;
+        : `<path${puzzle ? ' data-puzzle-piece=""' : ''} d="${puzzle ? piece.path : sector(radius, start, end)}" fill="${color}"/>`;
       bases.push(`<g data-component="${escape(name)}"${category}>${base}</g>`);
       if (segments.length > 1 && !puzzle) {
         // Every join is a separate pass, including the last-to-first join. Clip
@@ -152,7 +153,7 @@ export function renderCircularMosaic(components, options = {}, style) {
         const cap = `<circle cx="${x}" cy="${y}" r="${BAND / 2}" fill="${color}"`;
         joins.push(`<g clip-path="url(#${id}-join)">${cap} filter="url(#${idPrefix}-shadow)"/></g>${cap}/>`);
       }
-      const middle = segments.length === 1 ? -Math.PI / 2 + offset : (start + end) / 2 + (puzzle ? 0 : BAND / (2 * radius));
+      const middle = segments.length === 1 ? -Math.PI / 2 + offset : puzzle ? piece.middle : (start + end) / 2 + BAND / (2 * radius);
       const lower = Math.sin(middle) > 0;
       const direction = lower ? -1 : 1;
       const textAngle = middle + direction * (logo ? (LOGO_SIZE + GAP) / 2 : 0) / radius;

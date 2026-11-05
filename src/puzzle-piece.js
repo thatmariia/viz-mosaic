@@ -1,4 +1,4 @@
-import { insetPath, sampleCurve } from './inset.js';
+import { insetShape, sampleCurve } from './inset.js';
 
 const point = (radius, angle) => [radius * Math.cos(angle), radius * Math.sin(angle)];
 export const PUZZLE_GAP = 6;
@@ -18,6 +18,7 @@ function circularCurves(cx, cy, radius, start, end) {
 const neckRadius = 8;
 const headRadius = 12;
 const shoulder = (neckRadius + headRadius) / Math.SQRT2;
+export const PUZZLE_JOIN_REACH = neckRadius + shoulder + headRadius;
 const upperNeck = [
   [[20, 0], [18, 0], [16, 0], [shoulder, 0]],
   ...circularCurves(shoulder, neckRadius, neckRadius, -Math.PI / 2, -5 * Math.PI / 4),
@@ -42,6 +43,28 @@ function edgeCurves(radius, angle, variant, reverse = false) {
   return curves.map(curve => curve.map(position));
 }
 
+function visibleMiddle(outline, radius, nominal) {
+  const crossings = [];
+  for (const [index, a] of outline.entries()) {
+    const b = outline[(index + 1) % outline.length];
+    const dx = b[0] - a[0], dy = b[1] - a[1];
+    const aa = dx * dx + dy * dy;
+    if (aa < 1e-12) continue;
+    const bb = 2 * (a[0] * dx + a[1] * dy);
+    const cc = a[0] * a[0] + a[1] * a[1] - radius * radius;
+    const discriminant = bb * bb - 4 * aa * cc;
+    if (discriminant < 0) continue;
+    for (const t of [(-bb - Math.sqrt(discriminant)) / (2 * aa), (-bb + Math.sqrt(discriminant)) / (2 * aa)]) {
+      if (t < 0 || t > 1) continue;
+      const angle = Math.atan2(a[1] + t * dy, a[0] + t * dx);
+      crossings.push(nominal + Math.atan2(Math.sin(angle - nominal), Math.cos(angle - nominal)));
+    }
+  }
+  const before = Math.max(...crossings.filter(angle => angle < nominal));
+  const after = Math.min(...crossings.filter(angle => angle > nominal));
+  return Number.isFinite(before) && Number.isFinite(after) ? (before + after) / 2 : nominal;
+}
+
 export function puzzlePiece(radius, start, end, startVariant, endVariant) {
   const outer = radius + 32;
   const inner = radius - 32;
@@ -61,5 +84,6 @@ export function puzzlePiece(radius, start, end, startVariant, endVariant) {
   corner(point(inner, start), point(radius - 20, start));
   for (const curve of edgeCurves(radius, start, startVariant, true)) sampleCurve(curve, outline);
   corner(point(outer, start), outline[0]);
-  return insetPath(outline, PUZZLE_GAP / 2);
+  const shape = insetShape(outline, PUZZLE_GAP / 2);
+  return { path: shape.path, middle: visibleMiddle(shape.outline, radius, (start + end) / 2) };
 }

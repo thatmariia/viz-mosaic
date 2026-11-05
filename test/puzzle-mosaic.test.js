@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { renderRingMosaic, renderPuzzleMosaic } from '../src/index.js';
+import { puzzlePiece } from '../src/puzzle-piece.js';
 
 test('curved puzzle pieces retain input order and use inset outlines without strokes or masks', () => {
   const svg = renderPuzzleMosaic(['First', 'Second', 'Third'].map(name => ({ name, ring: 1, categoryId: 'same' })), { categoryColors: { same: '#abc' } });
@@ -25,6 +26,14 @@ test('puzzle mosaic preserves skipped positions and supports single pieces and e
   assert.doesNotMatch(svg, /data-puzzle-join=/);
   assert.match(renderPuzzleMosaic([{ name: 'Only', ring: 4 }]), /data-ring="4" data-radius="280"/);
   assert.match(renderPuzzleMosaic([]), />Puzzle mosaic<\/title>/);
+});
+
+test('puzzle label centers follow asymmetrical tabs and sockets', () => {
+  const left = puzzlePiece(100, 0, 2, 1, 3);
+  const right = puzzlePiece(100, 0, 2, 2, 4);
+  assert.ok(left.middle < 0.9);
+  assert.ok(right.middle > 1.1);
+  assert.ok(Math.abs(left.middle + right.middle - 2) < 0.005);
 });
 
 test('ring and puzzle mosaics use independent IDs and the same input validation', () => {

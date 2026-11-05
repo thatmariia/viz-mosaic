@@ -64,7 +64,8 @@ export function assignColors(plans, overrides, reach) {
   }
   function separation(first, second) {
     const a = metric(first), b = metric(second);
-    return Math.hypot(...a.map((channel, index) => channel - b[index]));
+    // Give lightness extra weight so strong hue differences are not the only cue.
+    return Math.hypot((a[0] - b[0]) * 2, a[1] - b[1], a[2] - b[2]);
   }
   function score(node, color) {
     let repeats = 0, minimum = Infinity, total = 0;
