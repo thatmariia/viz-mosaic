@@ -10,7 +10,7 @@
     }
   },
   "types": "./types/index.d.ts",
-  "files": ["src", "types", "demo", "README.md"],
+  "files": ["src", "types", "demo", "docs", "README.md"],
   "scripts": {
     "test": "node --test",
     "demo": "node scripts/serve-demo.js"

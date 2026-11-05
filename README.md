@@ -15,6 +15,8 @@ npm run demo
 
 Open <http://127.0.0.1:3000/demo/>. Set `PORT=3001` to use another port. Switch between **Ring mosaic** and **Puzzle mosaic** above the editor; your components, colors, title, and images are preserved. Select **Packed rings** for the reference composition or **Skipped ring** to see positions 1, 2, and 4 with a logo-plus-name strip. Edit components, attach PNG/JPEG images, optionally set category colors, then select a format and choose **Download**. The download contains the diagram currently shown in the valid preview; invalid input disables downloading.
 
+The demo opens with a **Research software ecosystem** example using nine named tool logos and the ecosystem center logo. Three rings express an educated priority guess; automatic colors favor contrasting neighbors. The [source assessment and placement rationale](docs/research-software-example.md) explains the documented relationships and editorial choices.
+
 SVG preserves vector geometry and embedded images. PNG uses a transparent background; JPEG uses white. Browser raster exports use twice the SVG dimensions, capped at 4,096 pixels per side. The public renderer always returns SVG; raster conversion stays in the demo's browser code.
 
 ## Render a mosaic
@@ -35,7 +37,7 @@ const svg = renderRingMosaic(
 );
 ```
 
-Names and ring indices are the only required component fields. A ring is a distance index: ring 1 is nearest the center. Equal indices share a ring in input order, clockwise. Missing indices remain empty, including when only ring 4 is present. Consecutive ring positions are adjacent. One component forms a complete band with its label at the top.
+Names and ring indices are the only required component fields. A ring is a distance index: ring 1 is nearest the center. Equal indices share a ring in input order, clockwise. Missing indices remain empty, including when only ring 4 is present. Consecutive ring positions are adjacent. Ring starts are staggered to separate their joins. One component forms a complete band with a readable curved label.
 
 ### Puzzle mosaic
 
@@ -70,11 +72,12 @@ Puzzle mosaic keeps circular ring edges and solid category fills. Components wit
 | --- | --- |
 | `title` | Accessible SVG name; defaults to `Ring mosaic` or `Puzzle mosaic` for the corresponding renderer. |
 | `centerLogo` | Optional base64 PNG or JPEG data URL, centered and upright. |
+| `monochromeLogos` | Optional boolean, default `false`. Tint component marks to their label color and turn white details into transparent cutouts. The demo enables it. |
 | `categoryColors` | Optional object mapping category IDs to opaque `#rgb` or `#rrggbb` colors. |
 | `idPrefix` | Optional stable ID prefix, starting with a letter and containing letters, digits, `_`, `.`, or `-`. Supply a **distinct prefix per inline diagram**. Defaults are unique per render. |
 | `measureText(name, fontSize)` | Optional callback returning a positive finite width in SVG pixels. Uses Arial, Helvetica, or sans-serif at weight 500. |
 
-Categories share colors across rings. Unmapped categories receive deterministic palette colors. Components without categories use the palette in ring order, avoiding equal neighboring colors where possible. Repeated colors remain distinguishable through overlapping shadows in ring mosaic and transparent spacing in puzzle mosaic. Text switches between dark and white according to the fill color.
+Categories share colors across rings. A deterministic, greedy palette assignment first avoids identical neighbors, then favors perceptual color contrast with extra weight on lightness around each ring and across adjacent rings, including rounded overlap regions. Unmapped category colors are chosen for the current layout. Explicit `categoryColors` stay exact; shared categories or fixed overrides can require repeated neighbors. Ring shadows and transparent puzzle spacing retain separation in those cases. Text switches between dark and white according to the fill color.
 
 The result is a complete responsive SVG string, with its own styles, scoped IDs, accessibility name, and embedded images. An empty component array produces a small, accessible empty canvas, optionally with a center logo. Inputs are never mutated.
 
@@ -97,6 +100,8 @@ Labels do not wrap or truncate. Dense rings increase center clearance while reta
 Use `data:image/png;base64,...` or `data:image/jpeg;base64,...`. The core validates the data URL and image signature; callers must supply decodable image bytes. The demo also checks image decoding before attaching uploads. Files remain associated with row identities when names are edited or duplicated.
 
 The renderer never fetches URLs. SVG source logos are not supported in this release; convert them to PNG first. Component logos rotate along the arc to align with their labels and precede the text in reading order, including on the lower half. The center logo stays upright. Both component and center images are embedded in downloaded files.
+
+Center logos scale to the space inside the nearest occupied ring, including dense single rings, skipped inner positions, and empty diagrams, with a 12-unit clearance. With `monochromeLogos: true`, component colors follow text contrast automatically; transparency and grayscale opacity are retained and white pixels become cutouts. Center logos retain their original colors.
 
 From Node:
 
@@ -142,7 +147,7 @@ GitHub installation is a **future example**, pending the owner's repository and 
 npm install github:YOUR-ORG/viz-mosaic#v0.1.0
 ```
 
-To host on GitHub Pages, deploy the repository root as the static artifact, including `demo/`, `src/`, and `README.md`; link to `/viz-mosaic/demo/`. Deploying only `demo/` omits its `../src/index.js` import. All demo imports, links, and styles use relative paths so repository subpaths work. No deployment workflow or public release is enabled yet.
+To host on GitHub Pages, deploy the repository root as the static artifact, including `demo/`, `src/`, `docs/`, and `README.md`; link to `/viz-mosaic/demo/`. Deploying only `demo/` omits its `../src/index.js` import. All demo imports, links, and styles use relative paths so repository subpaths work. No deployment workflow or public release is enabled yet.
 
 Before a public release, the owner needs to choose a license, create the GitHub repository, choose a release tag, and configure Pages if desired. This repository has not selected a license.
 

@@ -1,13 +1,16 @@
 import { renderRingMosaic, renderPuzzleMosaic } from '../src/index.js';
 import { downloadDiagram } from './download.js';
+import { researchSoftwareExample } from './research-software.js';
 
 const $ = selector => document.querySelector(selector);
 let nextId = 0;
-let components;
-let categoryColors;
+let components = [];
+let categoryColors = [];
 let centerLogo;
 let svg = '';
 let visualization = 'ring';
+let exampleRevision = 0;
+let exampleLoading = false;
 
 function placeholderLogo(background, size) {
   const canvas = document.createElement('canvas');
@@ -55,6 +58,7 @@ function render() {
     svg = renderMosaic(components.map(({ id, ...component }) => component), {
       title: $('#title').value,
       centerLogo,
+      monochromeLogos: true,
       categoryColors: colors,
       idPrefix: 'preview',
       measureText: (name, fontSize) => {
@@ -64,7 +68,7 @@ function render() {
     });
     $('#preview').innerHTML = svg;
     $('#error').hidden = true;
-    $('#download').disabled = false;
+    $('#download').disabled = exampleLoading;
     const rings = new Set(components.map(component => component.ring));
     $('#summary').textContent = `${components.length} components · ${rings.size} occupied rings`;
   } catch (error) {
@@ -115,7 +119,9 @@ async function readImage(file) {
   return data;
 }
 
-function reset() {
+async function reset() {
+  const revision = ++exampleRevision;
+  const selected = $('#example').value;
   const skipped = [
     { name: 'Collection', ring: 1, categoryId: 'data', logo: componentLogo },
     { name: 'Processing', ring: 1, categoryId: 'tools' },
@@ -133,13 +139,29 @@ function reset() {
     ['Delivery queue', 3, 'quality'], ['Access control', 3, 'data'], ['Trace index', 3, 'compute'], ['File intake', 3, 'transform'], ['Code lookup', 3, 'quality'], ['ID matching', 3, 'data'], ['Retry policy', 3, 'transform'],
     ['Key rotation', 4, 'services'], ['Dashboards', 4, 'control'], ['Event intake', 4, 'integration'], ['Terminology', 4, 'services'], ['Deduplication', 4, 'control'], ['Acknowledgment', 4, 'integration'], ['Encryption', 4, 'services'], ['Monitoring', 4, 'control'],
   ].map(([name, ring, categoryId], index) => ({ name, ring, categoryId, ...(index === 0 ? { logo: componentLogo } : {}) }));
-  components = ($('#example').value === 'skipped' ? skipped : packed).map(component => ({ ...component, id: String(++nextId) }));
-  categoryColors = [
+  let example = { components: selected === 'skipped' ? skipped : packed, title: 'Atlas research platform', centerLogo: systemLogo, categoryColors: [
     { id: 'data', color: '#cf123c' }, { id: 'transform', color: '#ffd43b' }, { id: 'quality', color: '#f2a1c4' },
     { id: 'compute', color: '#ff9c2c' }, { id: 'services', color: '#0653c4' }, { id: 'control', color: '#006b50' }, { id: 'integration', color: '#54389b' },
-  ].map(entry => ({ ...entry, key: String(++nextId) }));
-  centerLogo = systemLogo;
-  $('#title').value = 'Atlas research platform';
+  ] };
+  exampleLoading = true;
+  $('#preview').setAttribute('aria-busy', 'true');
+  $('#download').disabled = true;
+  try { if (selected === 'research') example = await researchSoftwareExample(); }
+  catch (error) {
+    if (revision !== exampleRevision) return;
+    exampleLoading = false;
+    $('#preview').setAttribute('aria-busy', 'false');
+    showError(error.message);
+    return;
+  }
+  if (revision !== exampleRevision) return;
+  exampleLoading = false;
+  $('#preview').setAttribute('aria-busy', 'false');
+  components = example.components.map(component => ({ ...component, id: String(++nextId) }));
+  categoryColors = example.categoryColors.map(entry => ({ ...entry, key: String(++nextId) }));
+  centerLogo = example.centerLogo;
+  $('#title').value = example.title;
+  $('#example-note').hidden = selected !== 'research';
   $('#center-logo').value = '';
   $('#clear-center').disabled = false;
   renderRows();
