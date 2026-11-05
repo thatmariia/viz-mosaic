@@ -71,7 +71,7 @@ const svg = renderRadialMosaic(
 );
 ```
 
-Components radiate outward as tapered rays with fully rounded ends and uniform category fills. Tool logos sit at the outer ends; readable names run along the bodies and rotate with their logos. The system logo stays upright in the open center. Spacing is transparent.
+Components radiate outward as tapered rays with fully rounded ends and uniform category fills. Tool logos sit at the outer ends; readable names run along the bodies and rotate with their logos. The system logo stays upright in the open center. Inner ends widen where space allows while preserving transparent gaps.
 
 All components follow input order clockwise, starting at the top. Here `ring` controls outward reach: 1 is shortest and each higher index adds 84 SVG units. Skipped indices preserve that distance. Switching views reuses the same data; the editor calls this field **Reach** in the radial view. Labels and density can increase the base radius to fit; rounded ends remain within separate angular slots. The default accessible title is `Radial mosaic`. TypeScript aliases are `RadialMosaicComponent` and `RadialMosaicOptions`.
 

@@ -30,8 +30,11 @@ test('radial rays grow for density and labels while retaining transparent space 
   assert.ok(2 * outer * Math.sin(Math.PI / count) > 2 * 80 + 6, 'Rounded ends must remain separated.');
   assert.match(rays[0][2], / A 80 80 0 1 1 /);
   assert.match(rays[0][2], / A 4 4 0 0 1 /);
+  const roomy = renderRadialMosaic(Array.from({ length: 9 }, (_, index) => ({ name: `Tool ${index}`, ring: 1 })));
+  assert.match(roomy, / A 16 16 0 0 1 /);
   const long = pieces(renderRadialMosaic([{ name: 'Long name', ring: 1 }], { measureText: () => 500 }));
-  assert.ok(reach(long[0]) > 700);
+  const short = pieces(renderRadialMosaic([{ name: 'Long name', ring: 1 }], { measureText: () => 50 }));
+  assert.ok(reach(long[0]) > reach(short[0]));
   assert.throws(() => renderRadialMosaic([{ name: 'Long', ring: 1 }], { measureText: () => 10000 }), /capacity.*Shorten names/);
   assert.throws(() => renderRadialMosaic(Array.from({ length: 300 }, () => ({ name: 'A', ring: 1 }))), /capacity/);
 });
