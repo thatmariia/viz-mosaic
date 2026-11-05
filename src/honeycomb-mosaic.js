@@ -1,4 +1,5 @@
 import { prepareInput } from './input.js';
+import { optimizeOrder, colorKey } from './order.js';
 import { contrastColor } from './colors.js';
 import { FONT_SIZE, LOGO_SIZE, number, escapeXML, createImages, svgDocument } from './svg.js';
 
@@ -49,6 +50,15 @@ export function renderHoneycombMosaic(components, options) {
       tiles.push({ ...ordered[index++], ...cell, shell, x, y });
     }
   }
+  const cells = new Map(tiles.map((tile, i) => [`${tile.q},${tile.r}`, i])), neighbors = [];
+  tiles.forEach((tile, i) => {
+    for (const [dq, dr] of DIRECTIONS.slice(0, 3)) {
+      const j = cells.get(`${tile.q + dq},${tile.r + dr}`);
+      if (j !== undefined) neighbors.push([i, j]);
+    }
+  });
+  const arranged = optimizeOrder(ordered, items => neighbors.reduce((score, [a, b]) => score + (colorKey(items[a].color) === colorKey(items[b].color) ? 1 : 0), 0));
+  tiles.forEach((tile, i) => Object.assign(tile, arranged[i]));
   const { path, vertices } = hexagon(radius), defs = [], content = [];
   const images = createImages(defs, idPrefix, monochromeLogos);
   let inner = Infinity, extent = 0;

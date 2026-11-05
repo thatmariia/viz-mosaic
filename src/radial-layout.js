@@ -1,4 +1,5 @@
 import { contrastColor } from './colors.js';
+import { optimizeOrder, colorKey } from './order.js';
 import { GAP, number, escapeXML, createImages, svgDocument } from './svg.js';
 
 export const RADIAL_FONT_SIZE = 36;
@@ -35,7 +36,11 @@ export function renderRadialLayout(entries, { centerLogo, title, idPrefix, monoc
   if (firstRadius > 4096) {
     throw new RangeError('Radial mosaic cannot fit within the 4096px first-radius capacity. Shorten names or use fewer components.');
   }
-  const segments = entries.map((entry, index) => ({
+  const ordered = optimizeOrder(entries, items => items.length < 2 ? 0 : items.reduce((score, a, i) => {
+    const b = items[(i + 1) % items.length];
+    return score + (colorKey(a.color) === colorKey(b.color) ? firstRadius + (Math.min(a.ring, b.ring) - 1) * PITCH : 0);
+  }, 0));
+  const segments = ordered.map((entry, index) => ({
     ...entry, start: index * TAU / entries.length, end: (index + 1) * TAU / entries.length,
   }));
   const defs = [];

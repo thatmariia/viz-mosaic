@@ -37,7 +37,6 @@ export async function researchSoftwareExample() {
     title: 'ELIXIR Research Software Ecosystem',
     centerLogo,
     components: tools.map(([name, , ring, categoryId], index) => ({ name, ring, categoryId, logo: logos[index] })),
-    levelLabels: { 1: 'Deep integration', 2: 'Lightweight integration' },
     categoryColors: [],
   };
 }

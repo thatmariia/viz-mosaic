@@ -32,7 +32,7 @@ export function prepareInput(components, options = {}, defaultTitle, fontSize = 
   if (!Array.isArray(components)) throw new TypeError('components must be an array.');
   if (!options || typeof options !== 'object' || Array.isArray(options)) throw new TypeError('options must be an object.');
   if (components.length > 10000) throw new RangeError('Use at most 10000 components per mosaic.');
-  const { title = defaultTitle, idPrefix = `viz-${++sequence}-${Math.random().toString(36).slice(2)}`, categoryColors = {}, palette = 'palette-1', measureText = estimateWidth, legend = false, legendPosition = 'bottom', levelLabels = {} } = options;
+  const { title = defaultTitle, idPrefix = `viz-${++sequence}-${Math.random().toString(36).slice(2)}`, categoryColors = {}, palette = 'palette-1', measureText = estimateWidth, legend = false, legendPosition = 'bottom' } = options;
   if (typeof palette !== 'string' || !Object.hasOwn(PALETTES, palette)) throw new TypeError('palette must be "palette-1" or "palette-2".');
   if (typeof title !== 'string' || !title.trim()) throw new TypeError('title must be a nonempty string.');
   if (typeof idPrefix !== 'string' || !/^[A-Za-z][\w.-]*$/.test(idPrefix)) {
@@ -41,10 +41,6 @@ export function prepareInput(components, options = {}, defaultTitle, fontSize = 
   if (typeof measureText !== 'function') throw new TypeError('measureText must be a function.');
   if (typeof legend !== 'boolean') throw new TypeError('legend must be a boolean.');
   if (!['top', 'right', 'bottom', 'left'].includes(legendPosition)) throw new TypeError('legendPosition must be "top", "right", "bottom", or "left".');
-  if (!levelLabels || typeof levelLabels !== 'object' || Array.isArray(levelLabels)) throw new TypeError('levelLabels must map level indices to nonempty labels.');
-  for (const [level, label] of Object.entries(levelLabels)) {
-    if (!/^(?:[1-9]|[12]\d|3[0-2])$/.test(level) || typeof label !== 'string' || !label.trim()) throw new TypeError('levelLabels must map indices from 1 to 32 to nonempty strings.');
-  }
   if (options.monochromeLogos !== undefined && typeof options.monochromeLogos !== 'boolean') {
     throw new TypeError('monochromeLogos must be a boolean.');
   }
@@ -80,6 +76,5 @@ export function prepareInput(components, options = {}, defaultTitle, fontSize = 
   });
 
   const categories = assignColors(entries, colors, PALETTES[palette]);
-  const levels = [...new Set(entries.map(entry => entry.ring))].sort((a, b) => a - b).map(level => ({ label: levelLabels[level] ? `${level} — ${levelLabels[level]}` : `Level ${level}` }));
-  return { entries, centerLogo, title, idPrefix, monochromeLogos: options.monochromeLogos, legend: legend ? { position: legendPosition, categories, levels } : undefined };
+  return { entries, centerLogo, title, idPrefix, monochromeLogos: options.monochromeLogos, legend: legend ? { position: legendPosition, categories } : undefined };
 }

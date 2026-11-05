@@ -17,7 +17,6 @@ let nextId = 0;
 let components = [];
 let categoryColors = [];
 let centerLogo;
-let levelLabels = {};
 let svg = '';
 let visualization = 'ring';
 let exampleRevision = 0;
@@ -73,7 +72,6 @@ function render() {
       palette: $('#palette').value,
       legend: $('#show-legend').checked,
       legendPosition: $('#legend-position').value,
-      levelLabels,
       idPrefix: 'preview',
       measureText: (name, fontSize) => {
         context.font = `500 ${fontSize}px Arial, Helvetica, sans-serif`;
@@ -184,7 +182,6 @@ async function reset() {
   components = example.components.map(component => ({ ...component, id: String(++nextId) }));
   categoryColors = example.categoryColors.map(entry => ({ ...entry, key: String(++nextId) }));
   centerLogo = example.centerLogo;
-  levelLabels = example.levelLabels ?? {};
   $('#title').value = example.title;
   $('#example-note').hidden = selected !== 'research';
   $('#center-logo').value = '';

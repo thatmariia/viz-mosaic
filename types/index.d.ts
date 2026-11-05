@@ -25,12 +25,10 @@ export interface RingMosaicOptions {
   categoryColors?: Readonly<Record<string, string>>;
   /** Automatic color palette. Defaults to "palette-1"; category overrides take priority. */
   palette?: MosaicPalette;
-  /** Include category and level legends in the SVG. Defaults to false. */
+  /** Include the category legend in the SVG. Defaults to false. */
   legend?: boolean;
   /** Place the legend outside the diagram. Defaults to "bottom". */
   legendPosition?: LegendPosition;
-  /** Optional readable names for numeric levels, used in the legend. */
-  levelLabels?: Readonly<Record<number, string>>;
   /** Width in SVG pixels, using Arial at the supplied font size and weight 500. */
   measureText?: (name: string, fontSize: number) => number;
 }
@@ -51,7 +49,7 @@ export function renderPuzzleMosaic(
   options?: PuzzleMosaicOptions,
 ): string;
 
-/** In radial mosaic, ring controls outward reach; components follow input order clockwise. */
+/** In radial mosaic, ring controls outward reach; components may be reordered within each level. */
 export type RadialMosaicComponent = RingMosaicComponent;
 /** Same options as ring mosaic; the default title is "Radial mosaic". */
 export type RadialMosaicOptions = RingMosaicOptions;

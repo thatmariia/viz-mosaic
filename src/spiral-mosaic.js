@@ -1,4 +1,5 @@
 import { prepareInput } from './input.js';
+import { optimizeOrder, bandContactScore } from './order.js';
 import { contrastColor } from './colors.js';
 import { FONT_SIZE, LOGO_SIZE, GAP, number, escapeXML, createImages, svgDocument, shadowFilter } from './svg.js';
 import { PUZZLE_JOIN_REACH } from './puzzle-piece.js';
@@ -51,16 +52,26 @@ export function renderSpiralLayout(components, options, puzzle = false) {
     base = Math.max(base, items.reduce((sum, entry) => sum + entry.needed, 0) / levelAngle - (ring - 1) * levelAngle * SLOPE);
     if (base > 4096) throw new RangeError(`Spiral level ${ring} cannot fit within the 4096px base-radius capacity. Shorten names or use fewer components.`);
   }
-  const plans = [...rings].sort(([a], [b]) => a - b).map(([ring, items]) => {
-    const radius = base + (ring - 1) * levelAngle * SLOPE;
-    const extra = (levelAngle - items.reduce((sum, entry) => sum + entry.needed / radius, 0)) / items.length;
-    let t = (ring - 1) * levelAngle;
-    return { ring, radius, segments: items.map(entry => {
-      const segment = { ...entry, start: t, end: t + entry.needed / radius + extra };
-      t = segment.end;
-      return segment;
-    }) };
-  });
+  function plan(ordered) {
+    const grouped = new Map();
+    for (const entry of ordered) {
+      if (!grouped.has(entry.ring)) grouped.set(entry.ring, []);
+      grouped.get(entry.ring).push(entry);
+    }
+    return [...grouped].sort(([a], [b]) => a - b).map(([ring, items]) => {
+      const radius = base + (ring - 1) * levelAngle * SLOPE;
+      const extra = (levelAngle - items.reduce((sum, entry) => sum + entry.needed / radius, 0)) / items.length;
+      let t = (ring - 1) * levelAngle;
+      return { ring, radius, segments: items.map(entry => {
+        const segment = { ...entry, start: t, end: t + entry.needed / radius + extra };
+        segment.radius = base + (segment.start + segment.end) / 2 * SLOPE;
+        t = segment.end;
+        return segment;
+      }) };
+    });
+  }
+  const ordered = optimizeOrder([...rings.values()].flat(), items => bandContactScore(plan(items), BAND, puzzle ? PUZZLE_JOIN_REACH : BAND / 2, true));
+  const plans = plan(ordered);
   const segments = plans.flatMap(plan => plan.segments);
   const connected = (a, b) => a && b && Math.abs(a.end - b.start) < 1e-8;
   const spiral = geometry(base), defs = puzzle ? [] : [shadowFilter(idPrefix)], bodies = [], joins = [], labels = [];

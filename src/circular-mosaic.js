@@ -2,6 +2,7 @@ import { PUZZLE_GAP, PUZZLE_JOIN_REACH, puzzlePiece } from './puzzle-piece.js';
 import { contrastColor } from './colors.js';
 import { FONT_SIZE, LOGO_SIZE, GAP, number, escapeXML as escape, createImages, svgDocument, shadowFilter } from './svg.js';
 import { prepareInput } from './input.js';
+import { optimizeOrder, bandContactScore } from './order.js';
 import { RADIAL_FONT_SIZE, renderRadialLayout } from './radial-layout.js';
 
 const TAU = Math.PI * 2;
@@ -52,19 +53,28 @@ export function renderCircularMosaic(components, options = {}, style) {
   const content = [];
   const images = createImages(defs, idPrefix, options.monochromeLogos);
 
-  const plans = [...rings].sort(([a], [b]) => a - b).map(([ring, entries]) => {
-    const radius = firstRadius + (ring - 1) * band;
-    const remaining = TAU - entries.reduce((sum, entry) => sum + entry.needed / radius, 0);
-    const offset = ((ring - 1) * Math.PI / Math.max(2, entries.length)) % TAU;
-    let angle = -Math.PI / 2 - 0.35 + offset;
-    const segments = entries.map(entry => {
-      const span = entry.needed / radius + remaining / entries.length;
-      const segment = { ...entry, start: angle, end: angle + span };
-      angle += span;
-      return segment;
+  function plan(ordered) {
+    const grouped = new Map();
+    for (const entry of ordered) {
+      if (!grouped.has(entry.ring)) grouped.set(entry.ring, []);
+      grouped.get(entry.ring).push(entry);
+    }
+    return [...grouped].sort(([a], [b]) => a - b).map(([ring, entries]) => {
+      const radius = firstRadius + (ring - 1) * band;
+      const remaining = TAU - entries.reduce((sum, entry) => sum + entry.needed / radius, 0);
+      const offset = ((ring - 1) * Math.PI / Math.max(2, entries.length)) % TAU;
+      let angle = -Math.PI / 2 - 0.35 + offset;
+      const segments = entries.map(entry => {
+        const span = entry.needed / radius + remaining / entries.length;
+        const segment = { ...entry, radius, start: angle, end: angle + span };
+        angle += span;
+        return segment;
+      });
+      return { ring, radius, offset, segments };
     });
-    return { ring, radius, offset, segments };
-  });
+  }
+  const ordered = optimizeOrder([...rings.values()].flat(), items => bandContactScore(plan(items), band, puzzle ? PUZZLE_JOIN_REACH : band / 2));
+  const plans = plan(ordered);
   for (const { ring, radius, offset, segments } of plans) {
     const bases = [];
     const joins = [];
