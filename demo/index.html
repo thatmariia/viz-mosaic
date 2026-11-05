@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Create a ring mosaic and download a portable SVG with viz-mosaic.">
+  <meta name="description" content="Create a ring mosaic and download SVG, PNG, or JPEG with viz-mosaic.">
   <title>viz-mosaic · Ring mosaic</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="./style.css">
@@ -17,7 +17,7 @@
   <main>
     <aside class="editor" aria-label="Mosaic editor">
       <h1>Ring mosaic</h1>
-      <p class="intro">Edit components and categories, then download your diagram as a standalone SVG.</p>
+      <p class="intro">Edit components and categories, then download your diagram as SVG, PNG, or JPEG.</p>
 
       <section aria-labelledby="diagram-heading">
         <h2 id="diagram-heading">Diagram</h2>
@@ -46,10 +46,10 @@
     </aside>
 
     <section class="preview-panel" aria-label="Mosaic preview">
-      <div class="preview-toolbar"><span class="preview-label">Preview</span><button id="download" class="primary" type="button">Download SVG <span aria-hidden="true">↓</span></button></div>
+      <div class="preview-toolbar"><span class="preview-label">Preview</span><div class="download-controls"><select id="format" aria-label="Download format"><option value="svg">SVG · vector</option><option value="png">PNG · transparent</option><option value="jpeg">JPEG · white background</option></select><button id="download" class="primary" type="button">Download <span aria-hidden="true">↓</span></button></div></div>
       <p id="error" role="alert" hidden></p>
       <div id="preview"></div>
-      <div class="preview-footer"><span id="summary" aria-live="polite"></span><span>Portable SVG · No external assets</span></div>
+      <div class="preview-footer"><span id="summary" aria-live="polite"></span><span>Self-contained files · Embedded images</span></div>
     </section>
   </main>
   <footer class="page-footer">viz-mosaic <span>SVG visualization library</span> <a href="../README.md">Documentation ↗</a></footer>

@@ -1,4 +1,5 @@
 import { renderRingMosaic } from '../src/index.js';
+import { downloadDiagram } from './download.js';
 
 const $ = selector => document.querySelector(selector);
 let nextId = 0;
@@ -218,12 +219,11 @@ $('#clear-center').addEventListener('click', () => {
 });
 $('#reset').addEventListener('click', reset);
 $('#example').addEventListener('change', reset);
-$('#download').addEventListener('click', () => {
-  const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }));
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = 'viz-mosaic.svg';
-  anchor.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+$('#format').addEventListener('change', render);
+$('#download').addEventListener('click', async () => {
+  $('#download').disabled = true;
+  try { await downloadDiagram(svg, $('#format').value); }
+  catch (error) { showError(error.message); return; }
+  $('#download').disabled = !$('#error').hidden;
 });
 reset();
