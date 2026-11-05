@@ -1,7 +1,7 @@
 {
   "name": "viz-mosaic",
   "version": "0.1.0",
-  "description": "Small, portable SVG visualizations: ring and puzzle mosaics.",
+  "description": "Small, portable SVG visualizations: ring, puzzle and radial mosaics.",
   "type": "module",
   "exports": {
     ".": {

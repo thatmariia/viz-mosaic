@@ -1,19 +1,13 @@
 import { PUZZLE_GAP, PUZZLE_JOIN_REACH, puzzlePiece } from './puzzle-piece.js';
 import { assignColors, contrastColor } from './colors.js';
+import { FONT_SIZE, LOGO_SIZE, GAP, number, escapeXML as escape, createImages, svgDocument } from './svg.js';
+import { renderRadialLayout } from './radial-layout.js';
 
 const TAU = Math.PI * 2;
 const BAND = 64;
 const PITCH = BAND;
-const FONT_SIZE = 16;
-const FONT = 'Arial, Helvetica, sans-serif';
-const LOGO_SIZE = 28;
-const GAP = 10;
 let sequence = 0;
 
-const escape = value => String(value).replace(/[&<>"']/g, c => ({
-  '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;',
-})[c]);
-const number = value => Number(value.toFixed(4));
 const point = (radius, angle) => [number(radius * Math.cos(angle)), number(radius * Math.sin(angle))];
 
 function arc(radius, start, end, direction = 1) {
@@ -50,13 +44,13 @@ function imageData(value, label) {
   return value;
 }
 
-/** Shared validation, radial layout, labels and assets for both public renderers. */
+/** Shared input validation and circular layouts for the public renderers. */
 export function renderCircularMosaic(components, options = {}, style) {
   if (!Array.isArray(components)) throw new TypeError('components must be an array.');
   if (!options || typeof options !== 'object' || Array.isArray(options)) throw new TypeError('options must be an object.');
   if (components.length > 10000) throw new RangeError('Use at most 10000 components per mosaic.');
   const puzzle = style === 'puzzle';
-  const { title = puzzle ? 'Puzzle mosaic' : 'Ring mosaic', idPrefix = `viz-${++sequence}-${Math.random().toString(36).slice(2)}`, categoryColors = {}, measureText = estimateWidth } = options;
+  const { title = style === 'radial' ? 'Radial mosaic' : puzzle ? 'Puzzle mosaic' : 'Ring mosaic', idPrefix = `viz-${++sequence}-${Math.random().toString(36).slice(2)}`, categoryColors = {}, measureText = estimateWidth } = options;
   if (typeof title !== 'string' || !title.trim()) throw new TypeError('title must be a nonempty string.');
   if (typeof idPrefix !== 'string' || !/^[A-Za-z][\w.-]*$/.test(idPrefix)) {
     throw new TypeError('idPrefix must start with a letter and contain only letters, digits, underscores, dots, or hyphens.');
@@ -94,8 +88,13 @@ export function renderCircularMosaic(components, options = {}, style) {
     if (!Number.isFinite(width) || width <= 0) throw new TypeError(`${label}: measureText must return a positive finite width.`);
     const groupWidth = width + (logo ? LOGO_SIZE + GAP : 0);
     if (!rings.has(ring)) rings.set(ring, []);
-    rings.get(ring).push({ name, logo, categoryId, width, groupWidth, needed: groupWidth + (puzzle ? PUZZLE_JOIN_REACH * 2 : BAND / 2) + 24 });
+    rings.get(ring).push({ name, ring, order: index, logo, categoryId, width, groupWidth, needed: groupWidth + (puzzle ? PUZZLE_JOIN_REACH * 2 : BAND / 2) + 24 });
   });
+
+  if (style === 'radial') {
+    const entries = [...rings.values()].flat().sort((a, b) => a.order - b.order);
+    return renderRadialLayout(entries, { colors, centerLogo, title, idPrefix, monochromeLogos: options.monochromeLogos });
+  }
 
   // Grow the center clearance, keeping pitch and the user's distance indices intact.
   let firstRadius = 88;
@@ -113,7 +112,7 @@ export function renderCircularMosaic(components, options = {}, style) {
   const extent = maxRing ? firstRadius + (maxRing - 1) * PITCH + BAND / 2 + 12 : 86;
   const defs = puzzle ? [] : [`<filter id="${idPrefix}-shadow" x="-50%" y="-50%" width="200%" height="200%" color-interpolation-filters="sRGB"><feDropShadow dx="0" dy="0" stdDeviation="4.5" flood-opacity="0.32"/></filter>`];
   const content = [];
-  const logoFilters = new Set();
+  const images = createImages(defs, idPrefix, options.monochromeLogos);
 
   const plans = [...rings].sort(([a], [b]) => a - b).map(([ring, entries]) => {
     const radius = firstRadius + (ring - 1) * PITCH;
@@ -167,17 +166,7 @@ export function renderCircularMosaic(components, options = {}, style) {
         const logoAngle = middle - direction * (width + GAP) / (2 * radius);
         const [x, y] = point(radius, logoAngle);
         const rotation = number((logoAngle + direction * Math.PI / 2) * 180 / Math.PI);
-        let filter = '';
-        if (options.monochromeLogos) {
-          const filterId = `${idPrefix}-logo-${textColor.slice(1)}`;
-          if (!logoFilters.has(textColor)) {
-            logoFilters.add(textColor);
-            // Turn white artwork into cutouts, retain the source alpha, then tint.
-            defs.push(`<filter id="${filterId}" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB"><feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -0.2126 -0.7152 -0.0722 0 1" result="ink"/><feComposite in="ink" in2="SourceGraphic" operator="in" result="alpha"/><feFlood flood-color="${textColor}"/><feComposite in2="alpha" operator="in"/></filter>`);
-          }
-          filter = ` filter="url(#${filterId})"`;
-        }
-        image = `<image href="${escape(logo)}" x="${number(x - LOGO_SIZE / 2)}" y="${number(y - LOGO_SIZE / 2)}" width="${LOGO_SIZE}" height="${LOGO_SIZE}" transform="rotate(${rotation} ${x} ${y})"${filter} preserveAspectRatio="xMidYMid meet"/>`;
+        image = images.component(logo, x, y, rotation, textColor);
       }
       labels.push(`<g>${image}<text fill="${textColor}" text-anchor="middle" xml:space="preserve"><textPath href="#${id}-label" startOffset="50%">${escape(name)}</textPath></text></g>`);
     });
@@ -185,8 +174,7 @@ export function renderCircularMosaic(components, options = {}, style) {
   }
   if (centerLogo) {
     const innerRadius = maxRing ? firstRadius + (Math.min(...rings.keys()) - 1) * PITCH - BAND / 2 : extent;
-    const size = (innerRadius - 12) * Math.SQRT2;
-    content.push(`<image href="${escape(centerLogo)}" x="${number(-size / 2)}" y="${number(-size / 2)}" width="${number(size)}" height="${number(size)}" preserveAspectRatio="xMidYMid meet"/>`);
+    content.push(images.center(centerLogo, innerRadius));
   }
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${number(-extent)} ${number(-extent)} ${number(extent * 2)} ${number(extent * 2)}" role="img" aria-labelledby="${idPrefix}-title" font-family="${FONT}" font-size="${FONT_SIZE}" font-weight="500"><title id="${idPrefix}-title">${escape(title)}</title><defs>${defs.join('')}</defs>${content.join('')}</svg>`;
+  return svgDocument(title, idPrefix, extent, defs, content);
 }

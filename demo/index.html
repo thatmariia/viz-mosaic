@@ -17,6 +17,7 @@
   <div class="visualizations" role="group" aria-label="Visualization">
     <button type="button" data-visualization="ring" aria-pressed="true">Ring mosaic</button>
     <button type="button" data-visualization="puzzle" aria-pressed="false">Puzzle mosaic</button>
+    <button type="button" data-visualization="radial" aria-pressed="false">Radial mosaic</button>
   </div>
   <main>
     <aside class="editor" aria-label="Mosaic editor">
@@ -26,7 +27,7 @@
       <section aria-labelledby="diagram-heading">
         <h2 id="diagram-heading">Diagram</h2>
         <label class="field">Example <select id="example"><option value="research">Research software ecosystem</option><option value="full">Packed rings</option><option value="skipped">Skipped ring</option></select></label>
-        <p id="example-note" class="hint" hidden>Rings show an illustrative priority guess. Automatic colors favor contrasting neighbors. <a href="../docs/research-software-example.md">Sources and rationale ↗</a></p>
+        <p id="example-note" class="hint" hidden>Distance levels show an illustrative priority guess. Automatic colors favor contrasting neighbors. <a href="../docs/research-software-example.md">Sources and rationale ↗</a></p>
         <label class="field">Title <input id="title" value="ELIXIR Research Software Ecosystem"></label>
         <div class="center-image">
           <label class="file-button">Choose center image<input id="center-logo" type="file" accept="image/png,image/jpeg"></label>
@@ -37,8 +38,8 @@
 
       <section aria-labelledby="components-heading">
         <div class="section-heading"><h2 id="components-heading">Components</h2><button id="add-component" class="quiet" type="button">+ Add</button></div>
-        <p class="hint">Ring 1 is closest to the center. Skipped rings stay empty.</p>
-        <div class="component-columns" aria-hidden="true"><span>Name</span><span>Ring</span><span>Category</span><span>Logo</span><span></span></div>
+        <p id="placement-hint" class="hint">Ring 1 is closest to the center. Skipped rings stay empty.</p>
+        <div class="component-columns" aria-hidden="true"><span>Name</span><span id="distance-label">Ring</span><span>Category</span><span>Logo</span><span></span></div>
         <div id="components"></div>
       </section>
 

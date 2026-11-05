@@ -1,8 +1,8 @@
 # viz-mosaic
 
-Small JavaScript visualizations that export portable SVG. Includes ring mosaic and puzzle mosaic, with the same component and category inputs.
+Small JavaScript visualizations that export portable SVG. Includes ring, puzzle, and radial mosaics, with the same component and category inputs.
 
-Both renderers are synchronous ESM with TypeScript declarations and no runtime dependencies. The demo uses native browser modules and a simple documentation-style theme inspired by [Zensical](https://zensical.org/docs/).
+All renderers are synchronous ESM with TypeScript declarations and no runtime dependencies. The demo uses native browser modules and a simple documentation-style theme inspired by [Zensical](https://zensical.org/docs/).
 
 ## Run locally
 
@@ -13,7 +13,7 @@ npm test
 npm run demo
 ```
 
-Open <http://127.0.0.1:3000/demo/>. Set `PORT=3001` to use another port. Switch between **Ring mosaic** and **Puzzle mosaic** above the editor; your components, colors, title, and images are preserved. Select **Packed rings** for the reference composition or **Skipped ring** to see positions 1, 2, and 4 with a logo-plus-name strip. Edit components, attach PNG/JPEG images, optionally set category colors, then select a format and choose **Download**. The download contains the diagram currently shown in the valid preview; invalid input disables downloading.
+Open <http://127.0.0.1:3000/demo/>. Set `PORT=3001` to use another port. Switch among **Ring mosaic**, **Puzzle mosaic**, and **Radial mosaic** above the editor; your components, colors, title, and images are preserved. Select **Packed rings** for the reference composition or **Skipped ring** to see positions 1, 2, and 4 with a logo-plus-name strip. Edit components, attach PNG/JPEG images, optionally set category colors, then select a format and choose **Download**. The download contains the diagram currently shown in the valid preview; invalid input disables downloading.
 
 The demo opens with a **Research software ecosystem** example using nine named tool logos and the ecosystem center logo. Three rings express an educated priority guess; automatic colors favor contrasting neighbors. The [source assessment and placement rationale](docs/research-software-example.md) explains the documented relationships and editorial choices.
 
@@ -57,6 +57,24 @@ const svg = renderPuzzleMosaic(
 
 Puzzle mosaic keeps circular ring edges and solid category fills. Components within each ring connect through simple rounded lobes and matching sockets, with heavily rounded corners and transparent spacing around every piece. The layout insets complete outlines by three SVG units to create six-unit gaps, including the circular edges between rings. Rounded curves use a fine geometric approximation; gaps are empty space rather than painted strokes or masks. They reveal the background in SVG and PNG; JPEG exports use a white background. A ring with one component forms a complete band without a connection to itself. The default accessible title is `Puzzle mosaic`; all other input rules, image behavior, and export formats are shared with ring mosaic. TypeScript callers can use `PuzzleMosaicComponent` and `PuzzleMosaicOptions`.
 
+### Radial mosaic
+
+```js
+import { renderRadialMosaic } from 'viz-mosaic';
+
+const svg = renderRadialMosaic(
+  [
+    { name: 'Collection', ring: 1, logo: collectionLogo },
+    { name: 'Processing', ring: 2, logo: processingLogo },
+  ],
+  { centerLogo: systemLogo },
+);
+```
+
+Components radiate outward as tapered rays with fully rounded ends and subtly shaded circular faces. Tool logos sit on the outer faces; readable names run along the bodies and rotate with their logos. The system logo stays upright in the open center. Spacing is transparent.
+
+All components follow input order clockwise, starting at the top. Here `ring` controls outward reach: 1 is shortest and each higher index adds 84 SVG units. Skipped indices preserve that distance. Switching views reuses the same data; the editor calls this field **Reach** in the radial view. Labels and density can increase the base radius to fit; round faces remain within separate angular slots. The default accessible title is `Radial mosaic`. TypeScript aliases are `RadialMosaicComponent` and `RadialMosaicOptions`.
+
 ### Components
 
 | Field | Type | Behavior |
@@ -70,14 +88,14 @@ Puzzle mosaic keeps circular ring edges and solid category fills. Components wit
 
 | Field | Behavior |
 | --- | --- |
-| `title` | Accessible SVG name; defaults to `Ring mosaic` or `Puzzle mosaic` for the corresponding renderer. |
+| `title` | Accessible SVG name; defaults to `Ring mosaic`, `Puzzle mosaic`, or `Radial mosaic` for the corresponding renderer. |
 | `centerLogo` | Optional base64 PNG or JPEG data URL, centered and upright. |
 | `monochromeLogos` | Optional boolean, default `false`. Tint component marks to their label color and turn white details into transparent cutouts. The demo enables it. |
 | `categoryColors` | Optional object mapping category IDs to opaque `#rgb` or `#rrggbb` colors. |
 | `idPrefix` | Optional stable ID prefix, starting with a letter and containing letters, digits, `_`, `.`, or `-`. Supply a **distinct prefix per inline diagram**. Defaults are unique per render. |
 | `measureText(name, fontSize)` | Optional callback returning a positive finite width in SVG pixels. Uses Arial, Helvetica, or sans-serif at weight 500. |
 
-Categories share colors across rings. A deterministic, greedy palette assignment first avoids identical neighbors, then favors perceptual color contrast with extra weight on lightness around each ring and across adjacent rings, including rounded overlap regions. Unmapped category colors are chosen for the current layout. Explicit `categoryColors` stay exact; shared categories or fixed overrides can require repeated neighbors. Ring shadows and transparent puzzle spacing retain separation in those cases. Text switches between dark and white according to the fill color.
+Categories share colors across rings. A deterministic, greedy palette assignment first avoids identical neighbors, then favors perceptual color contrast with extra weight on lightness around each ring and across adjacent rings, including rounded overlap regions. Radial mosaic applies the same contrast preference to neighboring rays, including the last-to-first pair. Unmapped category colors are chosen for the current layout. Explicit `categoryColors` stay exact; shared categories or fixed overrides can require repeated neighbors. Ring shadows and transparent puzzle/radial spacing retain separation in those cases. Text switches between dark and white according to the fill color.
 
 The result is a complete responsive SVG string, with its own styles, scoped IDs, accessibility name, and embedded images. An empty component array produces a small, accessible empty canvas, optionally with a center logo. Inputs are never mutated.
 
@@ -93,15 +111,15 @@ const measureText = (name, fontSize) => {
 };
 ```
 
-Labels do not wrap or truncate. Dense rings increase center clearance while retaining the same radial pitch and ring indices. Limits are 32 ring positions, 10,000 components, and a first-ring radius of 4,096 SVG pixels. A capacity error identifies the ring that cannot fit. A dense diagram may need to be viewed at a larger size or zoomed in.
+Labels do not wrap or truncate. Dense rings increase center clearance while retaining the same radial pitch and ring indices. Limits are 32 distance positions, 10,000 components, and a base radius of 4,096 SVG pixels for all views. A capacity error explains when names or component counts cannot fit. A dense diagram may need to be viewed at a larger size or zoomed in.
 
 ### Logo assets
 
 Use `data:image/png;base64,...` or `data:image/jpeg;base64,...`. The core validates the data URL and image signature; callers must supply decodable image bytes. The demo also checks image decoding before attaching uploads. Files remain associated with row identities when names are edited or duplicated.
 
-The renderer never fetches URLs. SVG source logos are not supported in this release; convert them to PNG first. Component logos rotate along the arc to align with their labels and precede the text in reading order, including on the lower half. The center logo stays upright. Both component and center images are embedded in downloaded files.
+The renderer never fetches URLs. SVG source logos are not supported in this release; convert them to PNG first. In ring and puzzle views, component logos rotate along the arc to align with their labels and precede the text in reading order, including on the lower half. Radial logos align with the straight labels and occupy the rounded outer ends. The center logo stays upright. Both component and center images are embedded in downloaded files.
 
-Center logos scale to the space inside the nearest occupied ring, including dense single rings, skipped inner positions, and empty diagrams, with a 12-unit clearance. With `monochromeLogos: true`, component colors follow text contrast automatically; transparency and grayscale opacity are retained and white pixels become cutouts. Center logos retain their original colors.
+Center logos scale to the space inside the nearest occupied ring or the radial view's open center, including dense single rings, skipped inner positions, and empty diagrams, with a 12-unit clearance. With `monochromeLogos: true`, component colors follow text contrast automatically; transparency and grayscale opacity are retained and white pixels become cutouts. Center logos retain their original colors.
 
 From Node:
 

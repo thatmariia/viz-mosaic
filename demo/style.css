@@ -14,7 +14,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 .version { font-size: 12px; color: var(--muted); }
 .version span { padding: 0 10px; }
 .version #visualization-label { padding: 0; }
-.visualizations { display: flex; gap: 24px; padding: 0 32px; border-bottom: 1px solid var(--border); }
+.visualizations { display: flex; flex-wrap: wrap; gap: 0 24px; padding: 0 32px; border-bottom: 1px solid var(--border); }
 .visualizations button { background: transparent; color: var(--muted); border-radius: 0; border-bottom: 2px solid transparent; padding: 14px 0 12px; font-size: 13px; }
 .visualizations button[aria-pressed="true"] { color: var(--accent); border-bottom-color: var(--accent); }
 main { max-width: 1500px; margin: auto; display: grid; grid-template-columns: 420px minmax(0, 1fr); }
@@ -65,4 +65,4 @@ button:disabled { opacity: 0.45; cursor: default; }
 .page-footer a { margin-left: auto; }
 [hidden] { display: none !important; }
 @media (max-width: 1000px) { main { grid-template-columns: 365px minmax(0, 1fr); } .editor { padding: 24px 16px; } .preview-panel { padding: 24px 16px; } .preview-footer { flex-direction: column; } .preview-toolbar { flex-wrap: wrap; } }
-@media (max-width: 720px) { .page-header { padding: 0 16px; } .version { font-size: 10px; } .version span { padding: 0 4px; } main { display: flex; flex-direction: column; } .preview-panel { position: static; order: -1; width: 100%; border-bottom: 1px solid var(--border); } #preview svg { max-height: none; min-height: 0; } .editor { border-right: 0; width: 100%; } #components { max-height: none; } .page-footer { padding: 20px 16px; flex-wrap: wrap; gap: 10px; } }
+@media (max-width: 720px) { .page-header { padding: 0 16px; } .visualizations { padding: 0 16px; gap: 0 20px; } .version { font-size: 10px; } .version span { padding: 0 4px; } main { display: flex; flex-direction: column; } .preview-panel { position: static; order: -1; width: 100%; border-bottom: 1px solid var(--border); } #preview svg { max-height: none; min-height: 0; } .editor { border-right: 0; width: 100%; } #components { max-height: none; } .page-footer { padding: 20px 16px; flex-wrap: wrap; gap: 10px; } }

@@ -40,3 +40,14 @@ export function renderPuzzleMosaic(
   components: readonly PuzzleMosaicComponent[],
   options?: PuzzleMosaicOptions,
 ): string;
+
+/** In radial mosaic, ring controls outward reach; components follow input order clockwise. */
+export type RadialMosaicComponent = RingMosaicComponent;
+/** Same options as ring mosaic; the default title is "Radial mosaic". */
+export type RadialMosaicOptions = RingMosaicOptions;
+
+/** Outward tapered rays with rounded ends and an optional upright center logo. */
+export function renderRadialMosaic(
+  components: readonly RadialMosaicComponent[],
+  options?: RadialMosaicOptions,
+): string;
