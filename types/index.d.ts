@@ -13,7 +13,7 @@ export interface RingMosaicComponent {
 }
 
 export interface RingMosaicOptions {
-  /** A base64 PNG or JPEG data URL; fits the available center space automatically. */
+  /** A base64 SVG, PNG, or JPEG data URL; fits the available center space automatically. */
   centerLogo?: string;
   /** Tint component logos to match label colors, treating white pixels as cutouts. Defaults to false. */
   monochromeLogos?: boolean;

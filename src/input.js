@@ -14,13 +14,18 @@ function estimateWidth(name, fontSize) {
   }, 0);
 }
 
-function imageData(value, label) {
+function imageData(value, label, allowSVG = false) {
   if (value === undefined) return;
-  const match = typeof value === 'string' && /^data:image\/(png|jpeg);base64,([A-Za-z0-9+/]+={0,2})$/.exec(value);
-  if (!match || match[2].length % 4 !== 0) {
-    throw new TypeError(`${label} must be a base64 PNG or JPEG data URL.`);
+  const match = typeof value === 'string' && /^data:image\/(png|jpeg|svg\+xml);base64,([A-Za-z0-9+/]+={0,2})$/.exec(value);
+  if (!match || match[2].length % 4 !== 0 || (match[1] === 'svg+xml' && !allowSVG)) {
+    throw new TypeError(`${label} must be a base64 ${allowSVG ? 'SVG, PNG, or JPEG' : 'PNG or JPEG'} data URL.`);
   }
   const bytes = atob(match[2]);
+  if (match[1] === 'svg+xml') {
+    const source = bytes.replace(/^\xef\xbb\xbf/, '').replace(/<\?[\s\S]*?\?>|<!--[\s\S]*?-->|<!DOCTYPE[^>]*>/g, '').trim();
+    if (!/^<svg(?:\s|\/?>)/.test(source)) throw new TypeError(`${label} has an invalid SVG image signature.`);
+    return value;
+  }
   const signature = match[1] === 'png' ? '\x89PNG\r\n\x1a\n' : '\xff\xd8\xff';
   if (!bytes.startsWith(signature) || bytes.length <= signature.length) {
     throw new TypeError(`${label} has an invalid ${match[1].toUpperCase()} image signature.`);
@@ -53,7 +58,7 @@ export function prepareInput(components, options = {}, defaultTitle, fontSize = 
       throw new TypeError(`categoryColors[${JSON.stringify(id)}] must be a solid #rgb or #rrggbb color.`);
     }
   }
-  const centerLogo = imageData(options.centerLogo, 'centerLogo');
+  const centerLogo = imageData(options.centerLogo, 'centerLogo', true);
   const entries = [];
   components.forEach((component, index) => {
     const label = `Component ${index + 1}`;

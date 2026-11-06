@@ -11,7 +11,7 @@ npm run demo
 npm test
 ```
 
-Open http://127.0.0.1:3000/demo/ to edit components, switch views and palettes, position or hide the category legend, and download SVG, transparent PNG, or JPEG.
+Open http://127.0.0.1:3000/demo/ to edit components, switch views and palettes, position or hide the category legend, and download SVG, transparent PNG, or JPEG. Raster downloads use a 6,000-pixel longest side and maximum JPEG quality.
 
 ## Use it
 
@@ -34,10 +34,10 @@ Other renderers: `renderPuzzleMosaic`, `renderRadialMosaic`, `renderSpiralMosaic
 - Lower levels sit nearer the center. Radial levels control reach; honeycomb levels control packing priority. Components may be reordered within a level to reduce same-color neighbors. Inputs are never mutated.
 - `palette-1` (default, six colors) and `palette-2` (ten colors) assign colors by first category appearance in the input. Colors repeat when exhausted. `categoryColors: { Tools: '#123456' }` overrides a category without shifting other colors.
 - `legend` defaults to `false`. `legendPosition` accepts `top`, `right`, `bottom` (default), or `left`. The category legend is embedded in the SVG and exports.
-- `centerLogo` accepts an embedded PNG/JPEG. `monochromeLogos: true` tints component logos to match text. The center retains its colors.
+- `centerLogo` accepts a base64 SVG/PNG/JPEG data URL. SVG center images stay vector in SVG downloads. `monochromeLogos: true` tints component logos to match text. The center retains its colors.
 - Optional `title`, distinct `idPrefix` per inline diagram, and `measureText(name, fontSize)` customize accessible naming, SVG IDs, and label measurement.
 
-Browser imports can use `./src/index.js` when served over HTTP. For package installation, run `npm pack` and install the generated archive in your consumer project. Serve the repository root for static hosting so `demo/` can load `src/`.
+Browser imports can use `./src/index.js` when served over HTTP. For package installation, run `npm pack` and install the generated archive in your consumer project. The Pages workflow tests and deploys the demo on pushes to `main` or manual runs. In repository Settings → Pages, set Source to **GitHub Actions**.
 
 The research software example separates deep integration (1) and lightweight integration (2), with Tools, Workflows, Packaging, and Benchmarking categories. WorkflowHub and BIII placements are editorial inferences from the [RSEc integration model](https://research-software-ecosystem.org/docs#integration-model).
 

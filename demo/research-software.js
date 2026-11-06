@@ -1,3 +1,5 @@
+import { readImage } from './images.js';
+
 const tools = [
   ['bio.tools', 'bio-tools', 1, 'Tools'],
   ['WorkflowHub', 'workflowhub', 1, 'Workflows'],
@@ -12,12 +14,18 @@ const tools = [
 let preparedLogos;
 
 async function prepareLogo(slug, center = false) {
+  const url = new URL(`./assets/research-software/${slug}.svg`, import.meta.url);
+  if (center) {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`Could not load the ${slug} logo.`);
+    return readImage(await response.blob(), true);
+  }
   const image = new Image();
-  image.src = new URL(`./assets/research-software/${slug}.svg`, import.meta.url).href;
+  image.src = url.href;
   try { await image.decode(); }
   catch { throw new Error(`Could not load the ${slug} logo.`); }
   const canvas = document.createElement('canvas');
-  canvas.width = canvas.height = center ? 1024 : 160;
+  canvas.width = canvas.height = 512;
   const context = canvas.getContext('2d');
   const size = canvas.width;
   const scale = size / Math.max(image.naturalWidth, image.naturalHeight);

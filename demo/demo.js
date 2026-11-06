@@ -1,5 +1,6 @@
 import { renderRingMosaic, renderPuzzleMosaic, renderRadialMosaic, renderSpiralMosaic, renderHoneycombMosaic, renderSpiralPuzzleMosaic } from '../src/index.js';
 import { downloadDiagram } from './download.js';
+import { readImage } from './images.js';
 import { researchSoftwareExample } from './research-software.js';
 import { PALETTES } from '../src/palettes.js';
 
@@ -128,20 +129,6 @@ function renderColors() {
     row.querySelector('[data-field="color"]').value = entry.color;
     return row;
   }));
-}
-
-async function readImage(file) {
-  if (!['image/png', 'image/jpeg'].includes(file.type)) throw new Error('Choose a PNG or JPEG image.');
-  const data = await new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(new Error('The image could not be read.'));
-    reader.readAsDataURL(file);
-  });
-  const image = new Image();
-  image.src = data;
-  await image.decode().catch(() => { throw new Error('The selected file is not a readable image.'); });
-  return data;
 }
 
 async function reset() {
@@ -273,7 +260,7 @@ $('.visualizations').addEventListener('click', event => {
 $('#center-logo').addEventListener('change', async event => {
   if (!event.target.files[0]) return;
   try {
-    centerLogo = await readImage(event.target.files[0]);
+    centerLogo = await readImage(event.target.files[0], true);
     $('#clear-center').disabled = false;
     render();
   } catch (error) { showError(error.message); }

@@ -39,10 +39,10 @@
           <label class="field">Legend position <select id="legend-position"><option value="bottom">Bottom</option><option value="right">Right</option><option value="top">Top</option><option value="left">Left</option></select></label>
         </div>
         <div class="center-image">
-          <label class="file-button">Choose center image<input id="center-logo" type="file" accept="image/png,image/jpeg"></label>
+          <label class="file-button">Choose center image<input id="center-logo" type="file" accept="image/svg+xml,image/png,image/jpeg"></label>
           <button id="clear-center" class="quiet" type="button">Remove image</button>
         </div>
-        <p class="hint">PNG or JPEG. Images are embedded in your SVG.</p>
+        <p class="hint">SVG, PNG, or JPEG. Images are embedded in your diagram.</p>
       </section>
 
       <section aria-labelledby="components-heading">
@@ -61,7 +61,7 @@
     </aside>
 
     <section class="preview-panel" aria-label="Mosaic preview">
-      <div class="preview-toolbar"><span class="preview-label">Preview</span><div class="download-controls"><select id="format" aria-label="Download format"><option value="svg">SVG · vector</option><option value="png">PNG · transparent</option><option value="jpeg">JPEG · white background</option></select><button id="download" class="primary" type="button">Download <span aria-hidden="true">↓</span></button></div></div>
+      <div class="preview-toolbar"><span class="preview-label">Preview</span><div class="download-controls"><select id="format" aria-label="Download format"><option value="svg">SVG · vector</option><option value="png">PNG · 6000 px · transparent</option><option value="jpeg">JPEG · 6000 px · white background</option></select><button id="download" class="primary" type="button">Download <span aria-hidden="true">↓</span></button></div></div>
       <p id="error" role="alert" hidden></p>
       <div id="preview"></div>
       <div class="preview-footer"><span id="summary" aria-live="polite"></span><span>Self-contained files · Embedded images</span></div>
