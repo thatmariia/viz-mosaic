@@ -20,6 +20,22 @@ test('all layouts separate repeated colors by moving whole components within the
   }
 });
 
+test('keeping input order bypasses color-based rearrangement across all layouts', () => {
+  const components = ['A', 'A', 'B', 'B', 'C', 'C'].flatMap((categoryId, index) => [2, 1].map(ring => ({
+    name: `Tool ${ring}-${index}`, ring, categoryId,
+  })));
+  for (const render of Object.values(mosaics)) {
+    const options = { idPrefix: 'ordered', measureText: () => 80 };
+    const expected = render === mosaics.renderRadialMosaic ? components : [...components].sort((a, b) => a.ring - b.ring);
+    const ordered = pieces(render(components, { ...options, keepInputOrder: true }));
+    assert.deepEqual(ordered.map(piece => piece[1]), expected.map(component => component.name), render.name);
+    const automatic = render(components, options);
+    assert.notDeepEqual(pieces(automatic).map(piece => piece[1]), expected.map(component => component.name), render.name);
+    assert.equal(render(components, { ...options, keepInputOrder: false }), automatic);
+  }
+  assert.throws(() => mosaics.renderRingMosaic([], { keepInputOrder: 'true' }), /keepInputOrder must be a boolean/);
+});
+
 test('circular ordering avoids matching colors across neighboring rings as well as around each ring', () => {
   const components = [1, 2].flatMap(ring => ['A', 'B', 'C'].map(categoryId => ({ name: `${categoryId}${ring}`, ring, categoryId })));
   for (const render of [mosaics.renderRingMosaic, mosaics.renderPuzzleMosaic]) {

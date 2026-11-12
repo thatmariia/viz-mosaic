@@ -31,8 +31,8 @@ h2 { font-size: 14px; font-weight: 600; margin: 0 0 14px; }
 .palette-swatches span { width: 18px; height: 18px; border-radius: 3px; }
 .legend-controls { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin-bottom: 12px; }
 .legend-controls .field { flex: 1; margin: 0; min-width: 120px; }
-.legend-toggle { display: flex; align-items: center; gap: 6px; font-size: 12px; }
-.legend-toggle input { width: 16px; height: 16px; margin: 0; padding: 0; }
+.checkbox-field { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+.checkbox-field input { width: 16px; height: 16px; margin: 0; padding: 0; }
 .field { font-size: 12px; display: grid; gap: 6px; margin-bottom: 12px; }
 input, select { border: 1px solid var(--border); color: inherit; background: #fff; min-width: 0; height: 34px; padding: 6px 8px; width: 100%; font-size: 12px; }
 #title { font-size: 13px; }
