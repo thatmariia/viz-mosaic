@@ -33,7 +33,7 @@ function hexagon(radius) {
 }
 
 export function renderHoneycombMosaic(components, options) {
-  const { entries, centerLogo, title, idPrefix, monochromeLogos, legend } = prepareInput(components, options, 'Honeycomb mosaic');
+  const { entries, centerLogo, title, idPrefix, monochromeLogos, legend, keepInputOrder } = prepareInput(components, options, 'Honeycomb mosaic');
   const ordered = [...entries].sort((a, b) => a.ring - b.ring || a.order - b.order);
   const radius = Math.max(56, ...entries.map(entry => (entry.width + 24) / ROOT3));
   const spacing = radius + GAP / ROOT3;
@@ -50,15 +50,17 @@ export function renderHoneycombMosaic(components, options) {
       tiles.push({ ...ordered[index++], ...cell, shell, x, y });
     }
   }
-  const cells = new Map(tiles.map((tile, i) => [`${tile.q},${tile.r}`, i])), neighbors = [];
-  tiles.forEach((tile, i) => {
-    for (const [dq, dr] of DIRECTIONS.slice(0, 3)) {
-      const j = cells.get(`${tile.q + dq},${tile.r + dr}`);
-      if (j !== undefined) neighbors.push([i, j]);
-    }
-  });
-  const arranged = optimizeOrder(ordered, items => neighbors.reduce((score, [a, b]) => score + (colorKey(items[a].color) === colorKey(items[b].color) ? 1 : 0), 0));
-  tiles.forEach((tile, i) => Object.assign(tile, arranged[i]));
+  if (!keepInputOrder) {
+    const cells = new Map(tiles.map((tile, i) => [`${tile.q},${tile.r}`, i])), neighbors = [];
+    tiles.forEach((tile, i) => {
+      for (const [dq, dr] of DIRECTIONS.slice(0, 3)) {
+        const j = cells.get(`${tile.q + dq},${tile.r + dr}`);
+        if (j !== undefined) neighbors.push([i, j]);
+      }
+    });
+    const arranged = optimizeOrder(ordered, items => neighbors.reduce((score, [a, b]) => score + (colorKey(items[a].color) === colorKey(items[b].color) ? 1 : 0), 0));
+    tiles.forEach((tile, i) => Object.assign(tile, arranged[i]));
+  }
   const { path, vertices } = hexagon(radius), defs = [], content = [];
   const images = createImages(defs, idPrefix, monochromeLogos);
   let inner = Infinity, extent = 0;

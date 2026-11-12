@@ -71,6 +71,7 @@ function render() {
       monochromeLogos: true,
       categoryColors: colors,
       palette: $('#palette').value,
+      keepInputOrder: $('#keep-input-order').checked,
       legend: $('#show-legend').checked,
       legendPosition: $('#legend-position').value,
       idPrefix: 'preview',
@@ -242,6 +243,7 @@ $('#add-color').addEventListener('click', () => {
 
 $('#title').addEventListener('input', render);
 $('#palette').addEventListener('change', () => { renderPalette(); render(); });
+$('#keep-input-order').addEventListener('change', render);
 $('#show-legend').addEventListener('change', () => { $('#legend-position').disabled = !$('#show-legend').checked; render(); });
 $('#legend-position').addEventListener('change', render);
 $('.visualizations').addEventListener('click', event => {

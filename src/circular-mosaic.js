@@ -23,16 +23,14 @@ function sector(radius, start, end, band) {
 export function renderCircularMosaic(components, options = {}, style) {
   const puzzle = style === 'puzzle';
   const band = puzzle ? 64 : 52;
-  const { entries, centerLogo, title, idPrefix, legend } = prepareInput(components, options, style === 'radial' ? 'Radial mosaic' : puzzle ? 'Puzzle mosaic' : 'Ring mosaic', style === 'radial' ? RADIAL_FONT_SIZE : FONT_SIZE);
+  const { entries, centerLogo, title, idPrefix, legend, keepInputOrder } = prepareInput(components, options, style === 'radial' ? 'Radial mosaic' : puzzle ? 'Puzzle mosaic' : 'Ring mosaic', style === 'radial' ? RADIAL_FONT_SIZE : FONT_SIZE);
+  if (style === 'radial') {
+    return renderRadialLayout(entries, { centerLogo, title, idPrefix, legend, monochromeLogos: options.monochromeLogos, keepInputOrder });
+  }
   const rings = new Map();
   for (const entry of entries) {
     if (!rings.has(entry.ring)) rings.set(entry.ring, []);
     rings.get(entry.ring).push({ ...entry, needed: entry.groupWidth + (puzzle ? PUZZLE_JOIN_REACH * 2 : band / 2) + 24 });
-  }
-
-  if (style === 'radial') {
-    const entries = [...rings.values()].flat().sort((a, b) => a.order - b.order);
-    return renderRadialLayout(entries, { centerLogo, title, idPrefix, legend, monochromeLogos: options.monochromeLogos });
   }
 
   // Grow the center clearance, keeping pitch and the user's distance indices intact.
@@ -73,7 +71,8 @@ export function renderCircularMosaic(components, options = {}, style) {
       return { ring, radius, offset, segments };
     });
   }
-  const ordered = optimizeOrder([...rings.values()].flat(), items => bandContactScore(plan(items), band, puzzle ? PUZZLE_JOIN_REACH : band / 2));
+  const groupedEntries = [...rings.values()].flat();
+  const ordered = keepInputOrder ? groupedEntries : optimizeOrder(groupedEntries, items => bandContactScore(plan(items), band, puzzle ? PUZZLE_JOIN_REACH : band / 2));
   const plans = plan(ordered);
   for (const { ring, radius, offset, segments } of plans) {
     const bases = [];

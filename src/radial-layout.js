@@ -17,7 +17,7 @@ function rayPath(inner, outer, tip, cap) {
   return `M ${point(inner, tip, -1)} L ${point(outer, cap, -1)} A ${number(cap)} ${number(cap)} 0 1 1 ${point(outer, cap, 1)} L ${point(inner, tip, 1)} A ${number(tip)} ${number(tip)} 0 0 1 ${point(inner, tip, -1)} Z`;
 }
 
-export function renderRadialLayout(entries, { centerLogo, title, idPrefix, monochromeLogos, legend }) {
+export function renderRadialLayout(entries, { centerLogo, title, idPrefix, monochromeLogos, legend, keepInputOrder }) {
   const halfAngle = Math.PI / Math.max(3, entries.length);
   const sine = Math.sin(halfAngle), cosine = Math.cos(halfAngle);
   const innerRadius = Math.max(112, (MIN_TIP + 3) / sine - MIN_TIP);
@@ -36,7 +36,7 @@ export function renderRadialLayout(entries, { centerLogo, title, idPrefix, monoc
   if (firstRadius > 4096) {
     throw new RangeError('Radial mosaic cannot fit within the 4096px first-radius capacity. Shorten names or use fewer components.');
   }
-  const ordered = optimizeOrder(entries, items => items.length < 2 ? 0 : items.reduce((score, a, i) => {
+  const ordered = keepInputOrder ? entries : optimizeOrder(entries, items => items.length < 2 ? 0 : items.reduce((score, a, i) => {
     const b = items[(i + 1) % items.length];
     return score + (colorKey(a.color) === colorKey(b.color) ? firstRadius + (Math.min(a.ring, b.ring) - 1) * PITCH : 0);
   }, 0));

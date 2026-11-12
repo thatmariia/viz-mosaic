@@ -39,7 +39,7 @@ function geometry(base) {
 }
 
 export function renderSpiralLayout(components, options, puzzle = false) {
-  const { entries, centerLogo, title, idPrefix, monochromeLogos, legend } = prepareInput(components, options, puzzle ? 'Spiral puzzle mosaic' : 'Spiral mosaic');
+  const { entries, centerLogo, title, idPrefix, monochromeLogos, legend, keepInputOrder } = prepareInput(components, options, puzzle ? 'Spiral puzzle mosaic' : 'Spiral mosaic');
   const rings = new Map();
   for (const entry of entries) {
     if (!rings.has(entry.ring)) rings.set(entry.ring, []);
@@ -70,7 +70,8 @@ export function renderSpiralLayout(components, options, puzzle = false) {
       }) };
     });
   }
-  const ordered = optimizeOrder([...rings.values()].flat(), items => bandContactScore(plan(items), BAND, puzzle ? PUZZLE_JOIN_REACH : BAND / 2, true));
+  const groupedEntries = [...rings.values()].flat();
+  const ordered = keepInputOrder ? groupedEntries : optimizeOrder(groupedEntries, items => bandContactScore(plan(items), BAND, puzzle ? PUZZLE_JOIN_REACH : BAND / 2, true));
   const plans = plan(ordered);
   const segments = plans.flatMap(plan => plan.segments);
   const connected = (a, b) => a && b && Math.abs(a.end - b.start) < 1e-8;

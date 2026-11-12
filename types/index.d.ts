@@ -27,6 +27,8 @@ export interface RingMosaicOptions {
   categoryColors?: Readonly<Record<string, string>>;
   /** Automatic color palette. Defaults to "palette-1"; category overrides take priority. */
   palette?: MosaicPalette;
+  /** Keep input order within each level, or around the circle for radial mosaics. Defaults to false. */
+  keepInputOrder?: boolean;
   /** Include the category legend in the SVG. Defaults to false. */
   legend?: boolean;
   /** Place the legend outside the diagram. Defaults to "bottom". */
