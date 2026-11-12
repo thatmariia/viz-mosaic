@@ -25,7 +25,10 @@ export function renderCircularMosaic(components, options = {}, style) {
   const band = puzzle ? 64 : 52;
   const { entries, centerLogo, title, idPrefix, legend, keepInputOrder } = prepareInput(components, options, style === 'radial' ? 'Radial mosaic' : puzzle ? 'Puzzle mosaic' : 'Ring mosaic', style === 'radial' ? RADIAL_FONT_SIZE : FONT_SIZE);
   if (style === 'radial') {
-    return renderRadialLayout(entries, { centerLogo, title, idPrefix, legend, monochromeLogos: options.monochromeLogos, keepInputOrder });
+    return renderRadialLayout(entries, {
+      centerLogo, title, idPrefix, legend, keepInputOrder,
+      monochromeLogos: options.monochromeLogos, scaleRadialLabels: options.scaleRadialLabels,
+    });
   }
   const rings = new Map();
   for (const entry of entries) {

@@ -108,3 +108,27 @@ test('radial mosaic shares validation, escapes names, and scopes accessible SVGs
   assert.throws(() => renderRadialMosaic(input, { centerLogo: 'https://example.org/logo.png' }), /data URL/);
   assert.throws(() => renderRadialMosaic(input, { categoryColors: { a: 'url(#bad)' } }), /solid #rgb/);
 });
+
+test('radial text and logos can grow together on larger leaves while long labels fit', () => {
+  const components = [
+    { name: 'Short', ring: 1, logo: png },
+    { name: 'Large', ring: 3, logo: png },
+    { name: 'Long label', ring: 3, logo: png },
+    { name: 'Text only', ring: 4 },
+  ];
+  const options = { idPrefix: 'test', measureText: name => name === 'Long label' ? 650 : 60 };
+  const fixed = renderRadialMosaic(components, options);
+  assert.equal(renderRadialMosaic(components, { ...options, scaleRadialLabels: false }), fixed);
+  const [short, large, long, textOnly] = pieces(renderRadialMosaic(components, { ...options, scaleRadialLabels: true }));
+  const fontSize = ray => Number(ray[2].match(/<text[^>]* font-size="([\d.]+)"/)?.[1] ?? 36);
+  const logoWidth = ray => attribute(ray[2].match(/<image[^>]+/)[0], 'width');
+  assert.equal(fontSize(short), 36);
+  assert.equal(logoWidth(short), 64);
+  assert.ok(fontSize(large) > fontSize(short));
+  assert.ok(Math.abs(logoWidth(large) / 64 - fontSize(large) / 36) < 0.00001);
+  const longCenter = Number(long[2].match(/translate\(([\d.]+) 0\)/)[1]);
+  const longEnd = longCenter + 650 * fontSize(long) / 36 / 2;
+  assert.ok(longEnd < reach(long) - logoWidth(long) / 2);
+  assert.ok(fontSize(textOnly) > fontSize(large));
+  assert.deepEqual([short, large, long, textOnly].map(reach), pieces(fixed).map(reach));
+});

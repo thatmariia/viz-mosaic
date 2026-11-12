@@ -72,6 +72,7 @@ function render() {
       categoryColors: colors,
       palette: $('#palette').value,
       keepInputOrder: $('#keep-input-order').checked,
+      scaleRadialLabels: $('#scale-radial-labels').checked,
       legend: $('#show-legend').checked,
       legendPosition: $('#legend-position').value,
       idPrefix: 'preview',
@@ -244,6 +245,7 @@ $('#add-color').addEventListener('click', () => {
 $('#title').addEventListener('input', render);
 $('#palette').addEventListener('change', () => { renderPalette(); render(); });
 $('#keep-input-order').addEventListener('change', render);
+$('#scale-radial-labels').addEventListener('change', render);
 $('#show-legend').addEventListener('change', () => { $('#legend-position').disabled = !$('#show-legend').checked; render(); });
 $('#legend-position').addEventListener('change', render);
 $('.visualizations').addEventListener('click', event => {
@@ -257,6 +259,7 @@ $('.visualizations').addEventListener('click', event => {
   $('#visualization-heading').textContent = name;
   $('#visualization-label').textContent = name.toLowerCase();
   $('#placement-hint').textContent = placement().hint;
+  $('#radial-label-scaling').hidden = visualization !== 'radial';
   $('#distance-label').textContent = placement().label;
   for (const input of document.querySelectorAll('[data-field="ring"]')) {
     input.setAttribute('aria-label', `${placement().label} index`);
