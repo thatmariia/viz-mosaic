@@ -14,11 +14,11 @@ function estimateWidth(name, fontSize) {
   }, 0);
 }
 
-function imageData(value, label, allowSVG = false) {
+function imageData(value, label) {
   if (value === undefined) return;
   const match = typeof value === 'string' && /^data:image\/(png|jpeg|svg\+xml);base64,([A-Za-z0-9+/]+={0,2})$/.exec(value);
-  if (!match || match[2].length % 4 !== 0 || (match[1] === 'svg+xml' && !allowSVG)) {
-    throw new TypeError(`${label} must be a base64 ${allowSVG ? 'SVG, PNG, or JPEG' : 'PNG or JPEG'} data URL.`);
+  if (!match || match[2].length % 4 !== 0) {
+    throw new TypeError(`${label} must be a base64 SVG, PNG, or JPEG data URL.`);
   }
   const bytes = atob(match[2]);
   if (match[1] === 'svg+xml') {
@@ -42,6 +42,7 @@ export function prepareInput(components, options = {}, defaultTitle, fontSize = 
     idPrefix = `viz-${++sequence}-${Math.random().toString(36).slice(2)}`,
     categoryColors = {}, palette = 'palette-1', measureText = estimateWidth,
     legend = false, legendPosition = 'bottom', keepInputOrder = false,
+    showComponentLogos = true,
   } = options;
   if (typeof palette !== 'string' || !Object.hasOwn(PALETTES, palette)) throw new TypeError('palette must be "palette-1" or "palette-2".');
   if (typeof title !== 'string' || !title.trim()) throw new TypeError('title must be a nonempty string.');
@@ -51,6 +52,7 @@ export function prepareInput(components, options = {}, defaultTitle, fontSize = 
   if (typeof measureText !== 'function') throw new TypeError('measureText must be a function.');
   if (typeof legend !== 'boolean') throw new TypeError('legend must be a boolean.');
   if (typeof keepInputOrder !== 'boolean') throw new TypeError('keepInputOrder must be a boolean.');
+  if (typeof showComponentLogos !== 'boolean') throw new TypeError('showComponentLogos must be a boolean.');
   if (!['top', 'right', 'bottom', 'left'].includes(legendPosition)) throw new TypeError('legendPosition must be "top", "right", "bottom", or "left".');
   if (options.monochromeLogos !== undefined && typeof options.monochromeLogos !== 'boolean') {
     throw new TypeError('monochromeLogos must be a boolean.');
@@ -64,7 +66,7 @@ export function prepareInput(components, options = {}, defaultTitle, fontSize = 
       throw new TypeError(`categoryColors[${JSON.stringify(id)}] must be a solid #rgb or #rrggbb color.`);
     }
   }
-  const centerLogo = imageData(options.centerLogo, 'centerLogo', true);
+  const centerLogo = imageData(options.centerLogo, 'centerLogo');
   const entries = [];
   components.forEach((component, index) => {
     const label = `Component ${index + 1}`;
@@ -82,7 +84,7 @@ export function prepareInput(components, options = {}, defaultTitle, fontSize = 
       (typeof categoryId === 'string' && categoryId.trim()) ||
       (typeof categoryId === 'number' && Number.isFinite(categoryId))
     )) throw new TypeError(`${label}: categoryId must be a nonempty string or a finite number.`);
-    const logo = imageData(component.logo, `${label} logo`);
+    const logo = showComponentLogos ? imageData(component.logo, `${label} logo`) : undefined;
     const width = measureText(name, fontSize);
     if (!Number.isFinite(width) || width <= 0) throw new TypeError(`${label}: measureText must return a positive finite width.`);
     const groupWidth = width + (logo ? LOGO_SIZE + GAP : 0);

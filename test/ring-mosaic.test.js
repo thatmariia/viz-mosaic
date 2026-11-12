@@ -83,7 +83,7 @@ test('both logos are embedded without network resources', () => {
   assert.equal((svg.match(/<image href="data:image\/png;base64,/g) || []).length, 2);
   assert.match(svg, /xmlns="http:\/\/www.w3.org\/2000\/svg"/);
   assert.equal((svg.match(/<image[^>]+transform="rotate\(/g) || []).length, 1);
-  for (const logo of ['https://example.org/logo.png', 'data:image/svg+xml;base64,PHN2Zy8+', 'data:image/png;base64,YmFk', png.slice(0, -1)]) {
+  for (const logo of ['https://example.org/logo.png', 'data:image/svg+xml;base64,PGh0bWwvPg==', 'data:image/png;base64,YmFk', png.slice(0, -1)]) {
     assert.throws(() => renderRingMosaic([{ name: 'Logo', ring: 1, logo }]), /Component 1 logo/);
   }
 });
