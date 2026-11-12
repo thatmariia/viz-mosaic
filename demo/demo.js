@@ -69,6 +69,7 @@ function render() {
       title: $('#title').value,
       centerLogo,
       monochromeLogos: true,
+      showComponentLogos: $('#show-component-logos').checked,
       categoryColors: colors,
       palette: $('#palette').value,
       keepInputOrder: $('#keep-input-order').checked,
@@ -245,6 +246,7 @@ $('#add-color').addEventListener('click', () => {
 $('#title').addEventListener('input', render);
 $('#palette').addEventListener('change', () => { renderPalette(); render(); });
 $('#keep-input-order').addEventListener('change', render);
+$('#show-component-logos').addEventListener('change', render);
 $('#scale-radial-labels').addEventListener('change', render);
 $('#show-legend').addEventListener('change', () => { $('#legend-position').disabled = !$('#show-legend').checked; render(); });
 $('#legend-position').addEventListener('change', render);
@@ -270,7 +272,7 @@ $('.visualizations').addEventListener('click', event => {
 $('#center-logo').addEventListener('change', async event => {
   if (!event.target.files[0]) return;
   try {
-    centerLogo = await readImage(event.target.files[0], true);
+    centerLogo = await readImage(event.target.files[0]);
     $('#clear-center').disabled = false;
     render();
   } catch (error) { showError(error.message); }

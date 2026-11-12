@@ -1,6 +1,7 @@
-export async function readImage(file, allowSVG = false) {
-  const types = allowSVG ? ['image/png', 'image/jpeg', 'image/svg+xml'] : ['image/png', 'image/jpeg'];
-  if (!types.includes(file.type)) throw new Error(`Choose ${allowSVG ? 'an SVG, PNG, or JPEG' : 'a PNG or JPEG'} image.`);
+export async function readImage(file) {
+  if (!['image/svg+xml', 'image/png', 'image/jpeg'].includes(file.type)) {
+    throw new Error('Choose an SVG, PNG, or JPEG image.');
+  }
   if (file.type === 'image/svg+xml') {
     const parsed = new DOMParser().parseFromString(await file.text(), 'image/svg+xml');
     if (parsed.querySelector('parsererror') || parsed.documentElement.localName !== 'svg' || parsed.documentElement.namespaceURI !== 'http://www.w3.org/2000/svg') {

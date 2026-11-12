@@ -13,31 +13,16 @@ const tools = [
 ];
 let preparedLogos;
 
-async function prepareLogo(slug, center = false) {
+async function prepareLogo(slug) {
   const url = new URL(`./assets/research-software/${slug}.svg`, import.meta.url);
-  if (center) {
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`Could not load the ${slug} logo.`);
-    return readImage(await response.blob(), true);
-  }
-  const image = new Image();
-  image.src = url.href;
-  try { await image.decode(); }
-  catch { throw new Error(`Could not load the ${slug} logo.`); }
-  const canvas = document.createElement('canvas');
-  canvas.width = canvas.height = 512;
-  const context = canvas.getContext('2d');
-  const size = canvas.width;
-  const scale = size / Math.max(image.naturalWidth, image.naturalHeight);
-  const width = image.naturalWidth * scale;
-  const height = image.naturalHeight * scale;
-  context.drawImage(image, (canvas.width - width) / 2, (canvas.height - height) / 2, width, height);
-  return canvas.toDataURL('image/png');
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`Could not load the ${slug} logo.`);
+  return readImage(await response.blob());
 }
 
 export async function researchSoftwareExample() {
   preparedLogos ??= Promise.all([
-    prepareLogo('research-software-ecosystem', true),
+    prepareLogo('research-software-ecosystem'),
     ...tools.map(([, slug]) => prepareLogo(slug)),
   ]).catch(error => { preparedLogos = undefined; throw error; });
   const [centerLogo, ...logos] = await preparedLogos;

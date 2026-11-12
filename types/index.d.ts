@@ -7,7 +7,7 @@ export interface RingMosaicComponent {
   name: string;
   /** Distance index, from 1 to 32. Missing indices remain empty. */
   ring: number;
-  /** A base64 PNG or JPEG data URL. */
+  /** A base64 SVG, PNG, or JPEG data URL. Omit for a text-only component. */
   logo?: string;
   categoryId?: CategoryId;
   /** Shape opacity from 0 (transparent) to 1 (opaque, default). Text and logos remain opaque. */
@@ -19,6 +19,8 @@ export interface RingMosaicOptions {
   centerLogo?: string;
   /** Tint component logos to match label colors, treating white pixels as cutouts. Defaults to false. */
   monochromeLogos?: boolean;
+  /** Show component logos alongside labels. Defaults to true. */
+  showComponentLogos?: boolean;
   /** Accessible name. Defaults to "Ring mosaic". */
   title?: string;
   /** Stable SVG IDs; use a distinct prefix for each inline diagram. */
