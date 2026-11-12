@@ -83,9 +83,9 @@ function render() {
       legend: $('#show-legend').checked,
       legendPosition: $('#legend-position').value,
       idPrefix: 'preview',
-      measureText: (name, fontSize) => {
+      measureText: (name, fontSize, weight = 500) => {
         const family = diagramFont ? `"${diagramFont.family}", Arial` : 'Arial';
-        context.font = `500 ${fontSize}px ${family}, Helvetica, sans-serif`;
+        context.font = `${weight} ${fontSize}px ${family}, Helvetica, sans-serif`;
         return context.measureText(name).width;
       },
     });
@@ -109,7 +109,7 @@ function renderRows() {
   $('#components').replaceChildren(...components.map(component => {
     const row = $('#component-row').content.firstElementChild.cloneNode(true);
     row.dataset.id = component.id;
-    for (const field of ['name', 'ring', 'categoryId']) row.querySelector(`[data-field="${field}"]`).value = component[field] ?? '';
+    for (const field of ['name', 'ring', 'categoryId', 'value']) row.querySelector(`[data-field="${field}"]`).value = component[field] ?? '';
     row.querySelector('[data-field="transparency"]').value = Number(((1 - (component.opacity ?? 1)) * 100).toFixed(8));
     row.querySelector('[data-field="ring"]').setAttribute('aria-label', `${placement().label} index`);
     row.querySelector('.logo-button').classList.toggle('has-logo', Boolean(component.logo));
@@ -197,7 +197,8 @@ $('#components').addEventListener('input', event => {
   if (field === 'transparency') {
     component.opacity = event.target.validity.badInput ? NaN : 1 - Number(value) / 100;
   } else {
-    component[field] = field === 'ring' ? (value === '' ? NaN : Number(value)) : (field === 'categoryId' && value === '' ? undefined : value);
+    const optional = field === 'categoryId' || field === 'value';
+    component[field] = field === 'ring' ? (value === '' ? NaN : Number(value)) : (optional && value === '' ? undefined : value);
   }
   render();
 });
@@ -293,6 +294,7 @@ $('.visualizations').addEventListener('click', event => {
   $('#visualization-label').textContent = name.toLowerCase();
   $('#placement-hint').textContent = placement().hint;
   $('#radial-label-scaling').hidden = visualization !== 'radial';
+  $('#components').toggleAttribute('data-radial', visualization === 'radial');
   $('#distance-label').textContent = placement().label;
   for (const input of document.querySelectorAll('[data-field="ring"]')) {
     input.setAttribute('aria-label', `${placement().label} index`);

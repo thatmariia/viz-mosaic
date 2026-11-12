@@ -33,7 +33,7 @@ function imageData(value, label) {
   return value;
 }
 
-export function prepareInput(components, options = {}, defaultTitle, fontSize = FONT_SIZE) {
+export function prepareInput(components, options = {}, defaultTitle, fontSize = FONT_SIZE, radial = false) {
   if (!Array.isArray(components)) throw new TypeError('components must be an array.');
   if (!options || typeof options !== 'object' || Array.isArray(options)) throw new TypeError('options must be an object.');
   if (components.length > 10000) throw new RangeError('Use at most 10000 components per mosaic.');
@@ -83,7 +83,7 @@ export function prepareInput(components, options = {}, defaultTitle, fontSize = 
     if (!Number.isInteger(component.ring) || component.ring < 1 || component.ring > 32) {
       throw new RangeError(`${label} (${component.name}): ring must be an integer from 1 to 32.`);
     }
-    const { name, ring, categoryId, opacity = 1 } = component;
+    const { name, ring, categoryId, opacity = 1, value } = component;
     if (!Number.isFinite(opacity) || opacity < 0 || opacity > 1) {
       throw new RangeError(`${label}: opacity must be a number from 0 to 1.`);
     }
@@ -92,10 +92,19 @@ export function prepareInput(components, options = {}, defaultTitle, fontSize = 
       (typeof categoryId === 'number' && Number.isFinite(categoryId))
     )) throw new TypeError(`${label}: categoryId must be a nonempty string or a finite number.`);
     const logo = showComponentLogos ? imageData(component.logo, `${label} logo`) : undefined;
+    if (value !== undefined && (typeof value !== 'string' || !value.trim() || Array.from(value).length > 16)) {
+      throw new TypeError(`${label}: value must be a nonempty string of at most 16 characters.`);
+    }
     const width = measureText(name, fontSize);
     if (!Number.isFinite(width) || width <= 0) throw new TypeError(`${label}: measureText must return a positive finite width.`);
+    let valueUnit;
+    if (radial && value !== undefined) {
+      const valueWidth = measureText(value, fontSize, 600);
+      if (!Number.isFinite(valueWidth) || valueWidth <= 0) throw new TypeError(`${label}: measureText must return a positive finite width for the value.`);
+      valueUnit = valueWidth / fontSize;
+    }
     const groupWidth = width + (logo ? LOGO_SIZE + GAP : 0);
-    entries.push({ name, ring, order: index, logo, categoryId, opacity, width, groupWidth });
+    entries.push({ name, ring, order: index, logo, value, valueUnit, categoryId, opacity, width, groupWidth });
   });
 
   const categories = assignColors(entries, colors, PALETTES[palette]);

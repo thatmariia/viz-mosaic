@@ -31,6 +31,7 @@ const svg = renderRingMosaic([
 Other renderers: `renderPuzzleMosaic`, `renderRadialMosaic`, `renderSpiralMosaic`, `renderSpiralPuzzleMosaic`, `renderHoneycombMosaic`.
 
 - Components require a nonempty `name` and integer `ring` from 1–32. Optional `categoryId` groups colors; optional `logo` accepts a base64 PNG/JPEG data URL.
+- In Radial, optional `value` text of up to 16 characters (such as `"71%"`) replaces the logo at the rounded end.
 - Lower levels sit nearer the center. Radial levels control reach; honeycomb levels control packing priority. Components may be reordered within a level to reduce same-color neighbors. Inputs are never mutated.
 - `palette-1` (default, six colors) and `palette-2` (ten colors) assign colors by first category appearance in the input. Colors repeat when exhausted. `categoryColors: { Tools: '#123456' }` overrides a category without shifting other colors.
 - `legend` defaults to `false`. `legendPosition` accepts `top`, `right`, `bottom` (default), or `left`. The category legend is embedded in the SVG and exports.

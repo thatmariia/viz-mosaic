@@ -9,6 +9,8 @@ export interface RingMosaicComponent {
   ring: number;
   /** A base64 SVG, PNG, or JPEG data URL. Omit for a text-only component. */
   logo?: string;
+  /** Radial mosaic only: short text (e.g. "71%") drawn upright across the leaf's rounded end, in place of the logo. */
+  value?: string;
   categoryId?: CategoryId;
   /** Shape opacity from 0 (transparent) to 1 (opaque, default). Text and logos remain opaque. */
   opacity?: number;
@@ -39,8 +41,8 @@ export interface RingMosaicOptions {
   fontFamily?: string;
   /** Optional base64 WOFF2 data URL for the font family, covering weights 500 and 600. */
   fontSource?: string;
-  /** Width in SVG pixels for the chosen family at the supplied size and weight 500. */
-  measureText?: (name: string, fontSize: number) => number;
+  /** Width in SVG pixels for the chosen family. Labels use weight 500 and radial values use 600. */
+  measureText?: (text: string, fontSize: number, weight?: 500 | 600) => number;
 }
 
 /** Synchronous, DOM-free renderer; does not mutate its inputs. */
@@ -63,7 +65,7 @@ export function renderPuzzleMosaic(
 export type RadialMosaicComponent = RingMosaicComponent;
 /** The default title is "Radial mosaic". */
 export type RadialMosaicOptions = RingMosaicOptions & {
-  /** Scale text and logos with the leaf size, limited by the available space. Defaults to false. */
+  /** Fill the rounded end with a value or logo and use one shared scale so labels grow with leaf size. Defaults to false. */
   scaleRadialLabels?: boolean;
 };
 

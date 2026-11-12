@@ -105,11 +105,17 @@ test('radial mosaic shares validation, escapes names, and scopes accessible SVGs
   assert.match(renderRadialMosaic([], { centerLogo: png }), /viewBox="-86 -86 172 172"/);
   assert.throws(() => renderRadialMosaic([{ name: 'Bad', ring: 0 }]), /Component 1.*ring/);
   assert.throws(() => renderRadialMosaic([{ name: ' ', ring: 1 }]), /name/);
+  for (const value of [12, '', ' ', '12345678901234567']) {
+    assert.throws(() => renderRadialMosaic([{ name: 'Tool', ring: 1, value }]), /value must be a nonempty string of at most 16 characters/);
+  }
+  assert.throws(() => renderRadialMosaic([{ name: 'Tool', ring: 1, value: '71%' }], {
+    measureText: (text, size, weight) => weight === 600 ? NaN : size,
+  }), /positive finite width for the value/);
   assert.throws(() => renderRadialMosaic(input, { centerLogo: 'https://example.org/logo.png' }), /data URL/);
   assert.throws(() => renderRadialMosaic(input, { categoryColors: { a: 'url(#bad)' } }), /solid #rgb/);
 });
 
-test('radial text and logos can grow together on larger leaves while long labels fit', () => {
+test('radial logos fill the rounded ends and labels fill the rest, while long labels fit', () => {
   const components = [
     { name: 'Short', ring: 1, logo: png },
     { name: 'Large', ring: 3, logo: png },
@@ -122,13 +128,33 @@ test('radial text and logos can grow together on larger leaves while long labels
   const [short, large, long, textOnly] = pieces(renderRadialMosaic(components, { ...options, scaleRadialLabels: true }));
   const fontSize = ray => Number(ray[2].match(/<text[^>]* font-size="([\d.]+)"/)?.[1] ?? 36);
   const logoWidth = ray => attribute(ray[2].match(/<image[^>]+/)[0], 'width');
-  assert.equal(fontSize(short), 36);
-  assert.equal(logoWidth(short), 64);
+  assert.ok(fontSize(short) >= 36);
+  assert.ok(logoWidth(short) > 64);
+  assert.ok(logoWidth(large) > logoWidth(short));
   assert.ok(fontSize(large) > fontSize(short));
-  assert.ok(Math.abs(logoWidth(large) / 64 - fontSize(large) / 36) < 0.00001);
+  assert.equal(fontSize(long), fontSize(large)); // same leaf size, same text size
   const longCenter = Number(long[2].match(/translate\(([\d.]+) 0\)/)[1]);
   const longEnd = longCenter + 650 * fontSize(long) / 36 / 2;
   assert.ok(longEnd < reach(long) - logoWidth(long) / 2);
   assert.ok(fontSize(textOnly) > fontSize(large));
   assert.deepEqual([short, large, long, textOnly].map(reach), pieces(fixed).map(reach));
+});
+
+test('radial values sit upright across the rounded end and grow with the leaf', () => {
+  const components = [
+    { name: 'Up', ring: 1, value: '12%', logo: png },
+    { name: 'Right', ring: 4, value: '71%' },
+    { name: 'Down', ring: 2, value: '40%' },
+    { name: 'Left', ring: 3, value: '55%' },
+  ];
+  const svg = renderRadialMosaic(components, { idPrefix: 'test', keepInputOrder: true, scaleRadialLabels: true });
+  assert.doesNotMatch(svg, /<image/);
+  const values = [...svg.matchAll(/<text[^>]* font-size="([\d.]+)" font-weight="600"[^>]* transform="translate\([\d.]+ 0\) rotate\((-?\d+)\)">([^<]+)</g)]
+    .map(([, size, turn, text]) => ({ size: Number(size), turn: Number(turn), text }));
+  assert.deepEqual(values.map(v => v.text), ['12%', '71%', '40%', '55%']);
+  // On screen (ray rotation plus the value's turn), values are never upside down.
+  const rays = [-90, 0, 90, 180];
+  const onScreen = values.map((v, i) => ((rays[i] + v.turn) % 360 + 540) % 360 - 180);
+  assert.deepEqual(onScreen, [0, 90, 0, 90]);
+  assert.ok(values[1].size > values[3].size && values[3].size > values[2].size && values[2].size >= values[0].size);
 });
