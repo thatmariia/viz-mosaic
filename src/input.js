@@ -68,7 +68,10 @@ export function prepareInput(components, options = {}, defaultTitle, fontSize = 
     if (!Number.isInteger(component.ring) || component.ring < 1 || component.ring > 32) {
       throw new RangeError(`${label} (${component.name}): ring must be an integer from 1 to 32.`);
     }
-    const { name, ring, categoryId } = component;
+    const { name, ring, categoryId, opacity = 1 } = component;
+    if (!Number.isFinite(opacity) || opacity < 0 || opacity > 1) {
+      throw new RangeError(`${label}: opacity must be a number from 0 to 1.`);
+    }
     if (categoryId !== undefined && !(
       (typeof categoryId === 'string' && categoryId.trim()) ||
       (typeof categoryId === 'number' && Number.isFinite(categoryId))
@@ -77,7 +80,7 @@ export function prepareInput(components, options = {}, defaultTitle, fontSize = 
     const width = measureText(name, fontSize);
     if (!Number.isFinite(width) || width <= 0) throw new TypeError(`${label}: measureText must return a positive finite width.`);
     const groupWidth = width + (logo ? LOGO_SIZE + GAP : 0);
-    entries.push({ name, ring, order: index, logo, categoryId, width, groupWidth });
+    entries.push({ name, ring, order: index, logo, categoryId, opacity, width, groupWidth });
   });
 
   const categories = assignColors(entries, colors, PALETTES[palette]);

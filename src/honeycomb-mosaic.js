@@ -1,7 +1,7 @@
 import { prepareInput } from './input.js';
 import { optimizeOrder, colorKey } from './order.js';
 import { contrastColor } from './colors.js';
-import { FONT_SIZE, LOGO_SIZE, number, escapeXML, createImages, svgDocument } from './svg.js';
+import { FONT_SIZE, LOGO_SIZE, number, escapeXML, createImages, svgDocument, opacityAttribute } from './svg.js';
 
 const ROOT3 = Math.sqrt(3);
 const GAP = 6;
@@ -63,10 +63,10 @@ export function renderHoneycombMosaic(components, options) {
   const images = createImages(defs, idPrefix, monochromeLogos);
   let inner = Infinity, extent = 0;
   for (const tile of tiles) {
-    const { name, ring, categoryId, logo, color, shell, q, r, x, y } = tile;
-    const textColor = contrastColor(color);
+    const { name, ring, categoryId, logo, color, shell, q, r, x, y, opacity } = tile;
+    const textColor = contrastColor(color, opacity);
     const category = categoryId === undefined ? '' : ` data-category-id="${escapeXML(categoryId)}"`;
-    content.push(`<g data-component="${escapeXML(name)}" data-ring="${ring}" data-shell="${shell}" data-q="${q}" data-r="${r}"${category} transform="translate(${number(x)} ${number(y)})"><path d="${path}" fill="${color}"/>${images.component(logo, 0, -LOGO_SIZE / 2, 0, textColor)}<text x="0" y="${number(FONT_SIZE * (logo ? 1.65 : 0.33))}" text-anchor="middle" fill="${textColor}" xml:space="preserve">${escapeXML(name)}</text></g>`);
+    content.push(`<g data-component="${escapeXML(name)}" data-ring="${ring}" data-shell="${shell}" data-q="${q}" data-r="${r}"${category} transform="translate(${number(x)} ${number(y)})"><path d="${path}" fill="${color}"${opacityAttribute(opacity, 'fill-opacity')}/>${images.component(logo, 0, -LOGO_SIZE / 2, 0, textColor)}<text x="0" y="${number(FONT_SIZE * (logo ? 1.65 : 0.33))}" text-anchor="middle" fill="${textColor}" xml:space="preserve">${escapeXML(name)}</text></g>`);
     // Rounded corners stay inside this polygon, so its clearance is conservative.
     vertices.forEach((v, i) => {
       const next = vertices[(i + 1) % 6], ax = x + v[0], ay = y + v[1];

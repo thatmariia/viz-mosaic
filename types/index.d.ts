@@ -10,6 +10,8 @@ export interface RingMosaicComponent {
   /** A base64 PNG or JPEG data URL. */
   logo?: string;
   categoryId?: CategoryId;
+  /** Shape opacity from 0 (transparent) to 1 (opaque, default). Text and logos remain opaque. */
+  opacity?: number;
 }
 
 export interface RingMosaicOptions {

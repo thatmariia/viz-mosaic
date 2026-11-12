@@ -1,15 +1,16 @@
 const normalize = color => color.length === 4 ? '#'+color.slice(1).split('').map(c => c+c).join('') : color;
 
-function linearRGB(color) {
+function linearRGB(color, opacity) {
   const hex = normalize(color).slice(1);
   return [0, 2, 4].map(offset => {
-    const value = parseInt(hex.slice(offset, offset + 2), 16) / 255;
+    const channel = parseInt(hex.slice(offset, offset + 2), 16) / 255;
+    const value = channel * opacity + (1 - opacity);
     return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
   });
 }
 
-export function contrastColor(color) {
-  const [r, g, b] = linearRGB(color);
+export function contrastColor(color, opacity = 1) {
+  const [r, g, b] = linearRGB(color, opacity);
   return r * 0.2126 + g * 0.7152 + b * 0.0722 > 0.179 ? '#182323' : '#ffffff';
 }
 

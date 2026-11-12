@@ -7,6 +7,20 @@ export const FONT = 'Arial, Helvetica, sans-serif';
 export const LOGO_SIZE = 28;
 export const GAP = 10;
 
+export function opacityAttribute(opacity, attribute = 'opacity') {
+  return opacity === 1 ? '' : ` ${attribute}="${opacity}"`;
+}
+
+// Reserve the previous cap's footprint so the two translucent fills cannot stack.
+export function clipOutsideCap(defs, id, [x, y], radius, extent) {
+  const left = number(x - radius);
+  const right = number(x + radius);
+  const bounds = `M ${-extent} ${-extent} H ${extent} V ${extent} H ${-extent} Z`;
+  const hole = `M ${left} ${y} A ${radius} ${radius} 0 1 0 ${right} ${y} A ${radius} ${radius} 0 1 0 ${left} ${y} Z`;
+  defs.push(`<clipPath id="${id}"><path clip-rule="evenodd" d="${bounds} ${hole}"/></clipPath>`);
+  return ` clip-path="url(#${id})"`;
+}
+
 export function createImages(defs, prefix, monochrome) {
   const filters = new Set();
   return {
