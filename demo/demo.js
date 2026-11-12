@@ -1,5 +1,6 @@
 import { renderRingMosaic, renderPuzzleMosaic, renderRadialMosaic, renderSpiralMosaic, renderHoneycombMosaic, renderSpiralPuzzleMosaic } from '../src/index.js';
 import { downloadDiagram } from './download.js';
+import { loadFont } from './fonts.js';
 import { readImage } from './images.js';
 import { researchSoftwareExample } from './research-software.js';
 import { PALETTES } from '../src/palettes.js';
@@ -22,6 +23,9 @@ let svg = '';
 let visualization = 'ring';
 let exampleRevision = 0;
 let exampleLoading = false;
+let diagramFont;
+let fontRevision = 0;
+let fontLoading = false;
 
 function placeholderLogo(background, size) {
   const canvas = document.createElement('canvas');
@@ -67,6 +71,8 @@ function render() {
     }
     svg = renderers[visualization](components.map(({ id, ...component }) => component), {
       title: $('#title').value,
+      fontFamily: diagramFont?.family,
+      fontSource: diagramFont?.source,
       centerLogo,
       monochromeLogos: true,
       showComponentLogos: $('#show-component-logos').checked,
@@ -78,13 +84,14 @@ function render() {
       legendPosition: $('#legend-position').value,
       idPrefix: 'preview',
       measureText: (name, fontSize) => {
-        context.font = `500 ${fontSize}px Arial, Helvetica, sans-serif`;
+        const family = diagramFont ? `"${diagramFont.family}", Arial` : 'Arial';
+        context.font = `500 ${fontSize}px ${family}, Helvetica, sans-serif`;
         return context.measureText(name).width;
       },
     });
     $('#preview').innerHTML = svg;
     $('#error').hidden = true;
-    $('#download').disabled = exampleLoading;
+    $('#download').disabled = exampleLoading || fontLoading;
     const rings = new Set(components.map(component => component.ring));
     $('#summary').textContent = `${components.length} components · ${rings.size} ${placement().summary}`;
   } catch (error) {
@@ -244,6 +251,30 @@ $('#add-color').addEventListener('click', () => {
 });
 
 $('#title').addEventListener('input', render);
+$('#diagram-font').addEventListener('change', async event => {
+  const select = event.target;
+  const revision = ++fontRevision;
+  const id = select.value;
+  const status = $('#font-status');
+  fontLoading = Boolean(id);
+  status.hidden = !fontLoading;
+  if (fontLoading) {
+    status.textContent = 'Loading font…';
+    $('#download').disabled = true;
+  }
+  try {
+    const font = id ? await loadFont(id, select.selectedOptions[0].textContent) : undefined;
+    if (revision !== fontRevision) return;
+    diagramFont = font;
+    status.hidden = true;
+  } catch {
+    if (revision !== fontRevision) return;
+    select.value = diagramFont?.id ?? '';
+    status.textContent = 'Could not load that font. The previous font is still selected.';
+  }
+  fontLoading = false;
+  render();
+});
 $('#palette').addEventListener('change', () => { renderPalette(); render(); });
 $('#keep-input-order').addEventListener('change', render);
 $('#show-component-logos').addEventListener('change', render);
@@ -290,7 +321,7 @@ $('#download').addEventListener('click', async () => {
   $('#download').disabled = true;
   try { await downloadDiagram(svg, $('#format').value); }
   catch (error) { showError(error.message); return; }
-  $('#download').disabled = !$('#error').hidden;
+  $('#download').disabled = !$('#error').hidden || exampleLoading || fontLoading;
 });
 renderPalette();
 reset();

@@ -46,9 +46,13 @@ export function createImages(defs, prefix, monochrome) {
   };
 }
 
-export function svgDocument(title, prefix, extent, defs, content, fontSize = FONT_SIZE, legend) {
-  const layout = layoutLegend(extent, fontSize, legend);
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${layout.viewBox.map(number).join(' ')}" role="img" aria-labelledby="${prefix}-title" font-family="${FONT}" font-size="${fontSize}" font-weight="500"><title id="${prefix}-title">${escapeXML(title)}</title><defs>${defs.join('')}</defs>${content.join('')}${layout.content}</svg>`;
+export function svgDocument(title, prefix, extent, defs, content, fontSize = FONT_SIZE, legend, font) {
+  const layout = layoutLegend(extent, fontSize, legend, font?.measureText);
+  const family = font ? `'${font.family}', ${FONT}` : FONT;
+  const face = font?.source
+    ? `<style>@font-face{font-family:'${font.family}';src:url('${font.source}') format('woff2');font-weight:500 600}</style>`
+    : '';
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${layout.viewBox.map(number).join(' ')}" role="img" aria-labelledby="${prefix}-title" font-family="${family}" font-size="${fontSize}" font-weight="500"><title id="${prefix}-title">${escapeXML(title)}</title><defs>${face}${defs.join('')}</defs>${content.join('')}${layout.content}</svg>`;
 }
 
 export function shadowFilter(prefix) {

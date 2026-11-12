@@ -43,6 +43,7 @@ export function prepareInput(components, options = {}, defaultTitle, fontSize = 
     categoryColors = {}, palette = 'palette-1', measureText = estimateWidth,
     legend = false, legendPosition = 'bottom', keepInputOrder = false,
     showComponentLogos = true,
+    fontFamily, fontSource,
   } = options;
   if (typeof palette !== 'string' || !Object.hasOwn(PALETTES, palette)) throw new TypeError('palette must be "palette-1" or "palette-2".');
   if (typeof title !== 'string' || !title.trim()) throw new TypeError('title must be a nonempty string.');
@@ -53,6 +54,12 @@ export function prepareInput(components, options = {}, defaultTitle, fontSize = 
   if (typeof legend !== 'boolean') throw new TypeError('legend must be a boolean.');
   if (typeof keepInputOrder !== 'boolean') throw new TypeError('keepInputOrder must be a boolean.');
   if (typeof showComponentLogos !== 'boolean') throw new TypeError('showComponentLogos must be a boolean.');
+  if (fontFamily !== undefined && (typeof fontFamily !== 'string' || fontFamily !== fontFamily.trim() || !/^[\p{L}\p{N}][\p{L}\p{N} -]*$/u.test(fontFamily))) {
+    throw new TypeError('fontFamily must be a single font name using letters, numbers, spaces, or hyphens.');
+  }
+  if (fontSource !== undefined && (!fontFamily || typeof fontSource !== 'string' || !/^data:font\/woff2;base64,[A-Za-z0-9+/]+={0,2}$/.test(fontSource))) {
+    throw new TypeError('fontSource requires a fontFamily and a base64 WOFF2 data URL.');
+  }
   if (!['top', 'right', 'bottom', 'left'].includes(legendPosition)) throw new TypeError('legendPosition must be "top", "right", "bottom", or "left".');
   if (options.monochromeLogos !== undefined && typeof options.monochromeLogos !== 'boolean') {
     throw new TypeError('monochromeLogos must be a boolean.');
@@ -92,5 +99,6 @@ export function prepareInput(components, options = {}, defaultTitle, fontSize = 
   });
 
   const categories = assignColors(entries, colors, PALETTES[palette]);
-  return { entries, centerLogo, title, idPrefix, monochromeLogos: options.monochromeLogos, keepInputOrder, legend: legend ? { position: legendPosition, categories } : undefined };
+  const font = fontFamily ? { family: fontFamily, source: fontSource, measureText: options.measureText } : undefined;
+  return { entries, centerLogo, title, idPrefix, monochromeLogos: options.monochromeLogos, keepInputOrder, font, legend: legend ? { position: legendPosition, categories } : undefined };
 }

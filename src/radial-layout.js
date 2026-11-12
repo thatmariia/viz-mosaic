@@ -17,7 +17,7 @@ function rayPath(inner, outer, tip, cap) {
   return `M ${point(inner, tip, -1)} L ${point(outer, cap, -1)} A ${number(cap)} ${number(cap)} 0 1 1 ${point(outer, cap, 1)} L ${point(inner, tip, 1)} A ${number(tip)} ${number(tip)} 0 0 1 ${point(inner, tip, -1)} Z`;
 }
 
-export function renderRadialLayout(entries, { centerLogo, title, idPrefix, monochromeLogos, legend, keepInputOrder, scaleRadialLabels = false }) {
+export function renderRadialLayout(entries, { centerLogo, title, idPrefix, monochromeLogos, legend, keepInputOrder, font, scaleRadialLabels = false }) {
   if (typeof scaleRadialLabels !== 'boolean') throw new TypeError('scaleRadialLabels must be a boolean.');
   const halfAngle = Math.PI / Math.max(3, entries.length);
   const sine = Math.sin(halfAngle), cosine = Math.cos(halfAngle);
@@ -72,11 +72,11 @@ export function renderRadialLayout(entries, { centerLogo, title, idPrefix, monoc
     const labelEnd = labelLimit - endPadding * scale;
     const labelCenter = (scaledStart + labelEnd) / 2;
     const fontSize = number(RADIAL_FONT_SIZE * scale);
-    const font = fontSize === RADIAL_FONT_SIZE ? '' : ` font-size="${fontSize}"`;
+    const fontSizeAttribute = fontSize === RADIAL_FONT_SIZE ? '' : ` font-size="${fontSize}"`;
     const logoSize = number(LOGO_SIZE * scale);
     const category = categoryId === undefined ? '' : ` data-category-id="${escapeXML(categoryId)}"`;
-    content.push(`<g data-component="${escapeXML(name)}" data-ring="${ring}" data-radius="${number(outer)}"${category} transform="rotate(${rotation})"><path d="${rayPath(inner, outer, tip, cap)}" fill="${color}"${opacityAttribute(opacity, 'fill-opacity')}/>${images.component(logo, number(outer), 0, flip, textColor, logoSize)}<text x="0" y="${number(fontSize * 0.33)}" fill="${textColor}"${font} text-anchor="middle" xml:space="preserve" transform="translate(${number(labelCenter)} 0) rotate(${flip})">${escapeXML(name)}</text></g>`);
+    content.push(`<g data-component="${escapeXML(name)}" data-ring="${ring}" data-radius="${number(outer)}"${category} transform="rotate(${rotation})"><path d="${rayPath(inner, outer, tip, cap)}" fill="${color}"${opacityAttribute(opacity, 'fill-opacity')}/>${images.component(logo, number(outer), 0, flip, textColor, logoSize)}<text x="0" y="${number(fontSize * 0.33)}" fill="${textColor}"${fontSizeAttribute} text-anchor="middle" xml:space="preserve" transform="translate(${number(labelCenter)} 0) rotate(${flip})">${escapeXML(name)}</text></g>`);
   }
   content.push(images.center(centerLogo, entries.length ? innerRadius : 76));
-  return svgDocument(title, idPrefix, extent, defs, content, RADIAL_FONT_SIZE, legend);
+  return svgDocument(title, idPrefix, extent, defs, content, RADIAL_FONT_SIZE, legend, font);
 }

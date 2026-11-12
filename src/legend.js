@@ -1,15 +1,16 @@
 import { number, escapeXML } from './format.js';
 
-export function layoutLegend(extent, fontSize, legend) {
+export function layoutLegend(extent, fontSize, legend, measureText) {
   const plot = [-extent, -extent, extent * 2, extent * 2];
   if (!legend || !legend.categories.length) return { viewBox: plot, content: '' };
   const side = legend.position === 'left' || legend.position === 'right';
   const width = side ? Math.max(fontSize * 10, Math.min(extent * 1.2, fontSize * 22)) : extent * 2;
   const pad = fontSize, gap = fontSize * 0.5, lineHeight = fontSize * 1.4;
   const swatch = fontSize * 0.8;
-  const textWidth = text => Array.from(text).reduce((sum, c) => sum + fontSize * (
+  const estimateWidth = text => Array.from(text).reduce((sum, c) => sum + fontSize * (
     /\p{Mark}/u.test(c) ? 0 : /[ ilI.,'!:;|]/u.test(c) ? 0.35 : /[MWmw@%]|[^\u0000-\u007f]/u.test(c) ? 1.05 : /[A-Z]/u.test(c) ? 0.84 : 0.72
   ), 0);
+  const textWidth = measureText ? text => measureText(text, fontSize) : estimateWidth;
   function wrap(label, maximum) {
     const lines = [];
     let line = '';
