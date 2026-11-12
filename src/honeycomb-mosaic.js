@@ -33,7 +33,7 @@ function hexagon(radius) {
 }
 
 export function renderHoneycombMosaic(components, options) {
-  const { entries, centerLogo, title, idPrefix, monochromeLogos, legend, keepInputOrder } = prepareInput(components, options, 'Honeycomb mosaic');
+  const { entries, centerLogo, title, idPrefix, monochromeLogos, legend, keepInputOrder, font } = prepareInput(components, options, 'Honeycomb mosaic');
   const ordered = [...entries].sort((a, b) => a.ring - b.ring || a.order - b.order);
   const radius = Math.max(56, ...entries.map(entry => (entry.width + 24) / ROOT3));
   const spacing = radius + GAP / ROOT3;
@@ -79,5 +79,5 @@ export function renderHoneycombMosaic(components, options) {
     });
   }
   content.push(images.center(centerLogo, tiles.length ? inner : 86));
-  return svgDocument(title, idPrefix, tiles.length ? extent + 12 : 86, defs, content, FONT_SIZE, legend);
+  return svgDocument(title, idPrefix, tiles.length ? extent + 12 : 86, defs, content, FONT_SIZE, legend, font);
 }

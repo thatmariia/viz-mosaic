@@ -35,7 +35,11 @@ export interface RingMosaicOptions {
   legend?: boolean;
   /** Place the legend outside the diagram. Defaults to "bottom". */
   legendPosition?: LegendPosition;
-  /** Width in SVG pixels, using Arial at the supplied font size and weight 500. */
+  /** A single font family name. Defaults to Arial. */
+  fontFamily?: string;
+  /** Optional base64 WOFF2 data URL for the font family, covering weights 500 and 600. */
+  fontSource?: string;
+  /** Width in SVG pixels for the chosen family at the supplied size and weight 500. */
   measureText?: (name: string, fontSize: number) => number;
 }
 

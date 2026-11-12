@@ -23,10 +23,10 @@ function sector(radius, start, end, band) {
 export function renderCircularMosaic(components, options = {}, style) {
   const puzzle = style === 'puzzle';
   const band = puzzle ? 64 : 52;
-  const { entries, centerLogo, title, idPrefix, legend, keepInputOrder } = prepareInput(components, options, style === 'radial' ? 'Radial mosaic' : puzzle ? 'Puzzle mosaic' : 'Ring mosaic', style === 'radial' ? RADIAL_FONT_SIZE : FONT_SIZE);
+  const { entries, centerLogo, title, idPrefix, legend, keepInputOrder, font } = prepareInput(components, options, style === 'radial' ? 'Radial mosaic' : puzzle ? 'Puzzle mosaic' : 'Ring mosaic', style === 'radial' ? RADIAL_FONT_SIZE : FONT_SIZE);
   if (style === 'radial') {
     return renderRadialLayout(entries, {
-      centerLogo, title, idPrefix, legend, keepInputOrder,
+      centerLogo, title, idPrefix, legend, keepInputOrder, font,
       monochromeLogos: options.monochromeLogos, scaleRadialLabels: options.scaleRadialLabels,
     });
   }
@@ -134,5 +134,5 @@ export function renderCircularMosaic(components, options = {}, style) {
     const innerRadius = maxRing ? firstRadius + (Math.min(...rings.keys()) - 1) * band - band / 2 : extent;
     content.push(images.center(centerLogo, innerRadius));
   }
-  return svgDocument(title, idPrefix, extent, defs, content, FONT_SIZE, legend);
+  return svgDocument(title, idPrefix, extent, defs, content, FONT_SIZE, legend, font);
 }

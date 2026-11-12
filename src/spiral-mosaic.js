@@ -39,7 +39,7 @@ function geometry(base) {
 }
 
 export function renderSpiralLayout(components, options, puzzle = false) {
-  const { entries, centerLogo, title, idPrefix, monochromeLogos, legend, keepInputOrder } = prepareInput(components, options, puzzle ? 'Spiral puzzle mosaic' : 'Spiral mosaic');
+  const { entries, centerLogo, title, idPrefix, monochromeLogos, legend, keepInputOrder, font } = prepareInput(components, options, puzzle ? 'Spiral puzzle mosaic' : 'Spiral mosaic');
   const rings = new Map();
   for (const entry of entries) {
     if (!rings.has(entry.ring)) rings.set(entry.ring, []);
@@ -122,7 +122,7 @@ export function renderSpiralLayout(components, options, puzzle = false) {
     labels.push(`<g data-label-for="${escapeXML(name)}">${image}<text fill="${textColor}" text-anchor="middle" xml:space="preserve"><textPath href="#${id}-label" startOffset="50%">${escapeXML(name)}</textPath></text></g>`);
   });
   const inner = maxRing ? base + (Math.min(...rings.keys()) - 1) * levelAngle * SLOPE - BAND / 2 : 86;
-  return svgDocument(title, idPrefix, extent, defs, [...bodies, ...joins, ...labels, images.center(centerLogo, inner)], FONT_SIZE, legend);
+  return svgDocument(title, idPrefix, extent, defs, [...bodies, ...joins, ...labels, images.center(centerLogo, inner)], FONT_SIZE, legend, font);
 }
 
 export function renderSpiralMosaic(components, options) {
