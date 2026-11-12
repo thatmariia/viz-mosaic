@@ -1,7 +1,7 @@
 import { prepareInput } from './input.js';
 import { optimizeOrder, bandContactScore } from './order.js';
 import { contrastColor } from './colors.js';
-import { FONT_SIZE, LOGO_SIZE, GAP, number, escapeXML, createImages, svgDocument, shadowFilter } from './svg.js';
+import { FONT_SIZE, LOGO_SIZE, GAP, number, escapeXML, createImages, svgDocument, shadowFilter, opacityAttribute, clipOutsideCap } from './svg.js';
 import { PUZZLE_JOIN_REACH } from './puzzle-piece.js';
 import { spiralPuzzlePiece } from './spiral-puzzle-piece.js';
 
@@ -74,6 +74,9 @@ export function renderSpiralLayout(components, options, puzzle = false) {
   const plans = plan(ordered);
   const segments = plans.flatMap(plan => plan.segments);
   const connected = (a, b) => a && b && Math.abs(a.end - b.start) < 1e-8;
+  const maxRing = Math.max(0, ...rings.keys());
+  const extent = maxRing ? base + maxRing * levelAngle * SLOPE + BAND / 2 + 12 : 86;
+  const separateFills = !puzzle && segments.some(segment => segment.opacity < 1);
   const spiral = geometry(base), defs = puzzle ? [] : [shadowFilter(idPrefix)], bodies = [], joins = [], labels = [];
   const images = createImages(defs, idPrefix, monochromeLogos);
   const cap = (t, color, filter = '') => {
@@ -81,23 +84,29 @@ export function renderSpiralLayout(components, options, puzzle = false) {
     return `<circle cx="${x}" cy="${y}" r="${BAND / 2}" fill="${color}"${filter}/>`;
   };
   segments.forEach((segment, i) => {
-    const { name, ring, categoryId, color, logo, width, start, end } = segment;
-    const id = `${idPrefix}-s${i}`, textColor = contrastColor(color);
+    const { name, ring, categoryId, color, logo, width, start, end, opacity } = segment;
+    const id = `${idPrefix}-s${i}`, textColor = contrastColor(color, opacity);
     const category = categoryId === undefined ? '' : ` data-category-id="${escapeXML(categoryId)}"`;
     const previous = segments[i - 1];
     const next = segments[i + 1];
-    const piece = puzzle ? spiralPuzzlePiece(spiral, start, end, connected(previous, segment) ? i : undefined, connected(segment, next) ? i + 1 : undefined) : undefined;
-    bodies.push(`<g data-component="${escapeXML(name)}" data-ring="${ring}" data-start="${number(start)}" data-end="${number(end)}"${category}><path${puzzle ? ' data-spiral-puzzle-piece=""' : ''} d="${piece ? piece.path : spiral.strip(start, end)}" fill="${color}"/></g>`);
+    const hasPrevious = connected(previous, segment);
+    const hasNext = connected(segment, next);
+    const piece = puzzle ? spiralPuzzlePiece(spiral, start, end, hasPrevious ? i : undefined, hasNext ? i + 1 : undefined) : undefined;
+    const clip = separateFills && hasPrevious
+      ? clipOutsideCap(defs, `${id}-fill`, spiral.at(previous.end).point.map(number), BAND / 2, extent)
+      : '';
+    const caps = separateFills ? `${hasPrevious ? '' : cap(start, color)}${cap(end, color)}` : '';
+    bodies.push(`<g data-component="${escapeXML(name)}" data-ring="${ring}" data-start="${number(start)}" data-end="${number(end)}"${category}${opacityAttribute(opacity)}${clip}><path${puzzle ? ' data-spiral-puzzle-piece=""' : ''} d="${piece ? piece.path : spiral.strip(start, end)}" fill="${color}"/>${caps}</g>`);
     if (!puzzle) {
-      if (!connected(previous, segment)) bodies.push(cap(start, color));
-      if (connected(segment, next)) {
+      if (!separateFills && !hasPrevious) bodies.push(cap(start, color));
+      if (hasNext && opacity === 1 && next.opacity === 1) {
         defs.push(`<clipPath id="${id}-join"><path d="${spiral.strip(next.start, next.end)}"/></clipPath>`);
         joins.push(`<g data-spiral-join="" clip-path="url(#${id}-join)">${cap(end, color, ` filter="url(#${idPrefix}-shadow)"`)}</g>`);
       }
-      joins.push(cap(end, color));
+      if (!separateFills) joins.push(cap(end, color));
     }
     const length = spiral.length(start, end);
-    const middle = piece ? piece.middle : spiral.advance(start, length / 2 + (connected(previous, segment) ? BAND / 2 : 0));
+    const middle = piece ? piece.middle : spiral.advance(start, length / 2 + (hasPrevious ? BAND / 2 : 0));
     const direction = Math.cos(spiral.at(middle).tangent) < 0 ? -1 : 1;
     const textMiddle = spiral.advance(middle, direction * (logo ? (LOGO_SIZE + GAP) / 2 : 0));
     const half = width / 2 + 16;
@@ -111,8 +120,6 @@ export function renderSpiralLayout(components, options, puzzle = false) {
     }
     labels.push(`<g data-label-for="${escapeXML(name)}">${image}<text fill="${textColor}" text-anchor="middle" xml:space="preserve"><textPath href="#${id}-label" startOffset="50%">${escapeXML(name)}</textPath></text></g>`);
   });
-  const maxRing = Math.max(0, ...rings.keys());
-  const extent = maxRing ? base + maxRing * levelAngle * SLOPE + BAND / 2 + 12 : 86;
   const inner = maxRing ? base + (Math.min(...rings.keys()) - 1) * levelAngle * SLOPE - BAND / 2 : 86;
   return svgDocument(title, idPrefix, extent, defs, [...bodies, ...joins, ...labels, images.center(centerLogo, inner)], FONT_SIZE, legend);
 }

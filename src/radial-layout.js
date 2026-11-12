@@ -1,6 +1,6 @@
 import { contrastColor } from './colors.js';
 import { optimizeOrder, colorKey } from './order.js';
-import { GAP, number, escapeXML, createImages, svgDocument } from './svg.js';
+import { GAP, number, escapeXML, createImages, svgDocument, opacityAttribute } from './svg.js';
 
 export const RADIAL_FONT_SIZE = 36;
 const LOGO_SIZE = 64;
@@ -48,18 +48,18 @@ export function renderRadialLayout(entries, { centerLogo, title, idPrefix, monoc
   const images = createImages(defs, idPrefix, monochromeLogos);
   let extent = 86;
   for (const entry of segments) {
-    const { name, ring, logo, categoryId, color, start } = entry;
+    const { name, ring, logo, categoryId, color, start, opacity } = entry;
     const outer = firstRadius + (ring - 1) * PITCH;
     const cap = outer * sine - offset;
     extent = Math.max(extent, outer + cap + 12);
     const angle = start - Math.PI / 2;
     const rotation = number(angle * 180 / Math.PI);
     const flip = Math.cos(angle) < -1e-8 ? 180 : 0;
-    const textColor = contrastColor(color);
+    const textColor = contrastColor(color, opacity);
     const labelEnd = logo ? outer - LOGO_SIZE / 2 - GAP : outer + cap - 14;
     const labelCenter = (labelStart + labelEnd) / 2;
     const category = categoryId === undefined ? '' : ` data-category-id="${escapeXML(categoryId)}"`;
-    content.push(`<g data-component="${escapeXML(name)}" data-ring="${ring}" data-radius="${number(outer)}"${category} transform="rotate(${rotation})"><path d="${rayPath(inner, outer, tip, cap)}" fill="${color}"/>${images.component(logo, number(outer), 0, flip, textColor, LOGO_SIZE)}<text x="0" y="${RADIAL_FONT_SIZE * 0.33}" fill="${textColor}" text-anchor="middle" xml:space="preserve" transform="translate(${number(labelCenter)} 0) rotate(${flip})">${escapeXML(name)}</text></g>`);
+    content.push(`<g data-component="${escapeXML(name)}" data-ring="${ring}" data-radius="${number(outer)}"${category} transform="rotate(${rotation})"><path d="${rayPath(inner, outer, tip, cap)}" fill="${color}"${opacityAttribute(opacity, 'fill-opacity')}/>${images.component(logo, number(outer), 0, flip, textColor, LOGO_SIZE)}<text x="0" y="${RADIAL_FONT_SIZE * 0.33}" fill="${textColor}" text-anchor="middle" xml:space="preserve" transform="translate(${number(labelCenter)} 0) rotate(${flip})">${escapeXML(name)}</text></g>`);
   }
   content.push(images.center(centerLogo, entries.length ? innerRadius : 76));
   return svgDocument(title, idPrefix, extent, defs, content, RADIAL_FONT_SIZE, legend);

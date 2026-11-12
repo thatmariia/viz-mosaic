@@ -100,6 +100,7 @@ function renderRows() {
     const row = $('#component-row').content.firstElementChild.cloneNode(true);
     row.dataset.id = component.id;
     for (const field of ['name', 'ring', 'categoryId']) row.querySelector(`[data-field="${field}"]`).value = component[field] ?? '';
+    row.querySelector('[data-field="transparency"]').value = Number(((1 - (component.opacity ?? 1)) * 100).toFixed(8));
     row.querySelector('[data-field="ring"]').setAttribute('aria-label', `${placement().label} index`);
     row.querySelector('.logo-button').classList.toggle('has-logo', Boolean(component.logo));
     row.querySelector('.logo-button span').textContent = component.logo ? '✓' : '+';
@@ -183,7 +184,11 @@ $('#components').addEventListener('input', event => {
   if (!field || field === 'logo') return;
   const component = components.find(component => component.id === event.target.closest('.component-row').dataset.id);
   const value = event.target.value;
-  component[field] = field === 'ring' ? (value === '' ? NaN : Number(value)) : (field === 'categoryId' && value === '' ? undefined : value);
+  if (field === 'transparency') {
+    component.opacity = event.target.validity.badInput ? NaN : 1 - Number(value) / 100;
+  } else {
+    component[field] = field === 'ring' ? (value === '' ? NaN : Number(value)) : (field === 'categoryId' && value === '' ? undefined : value);
+  }
   render();
 });
 

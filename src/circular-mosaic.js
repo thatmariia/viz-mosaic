@@ -1,6 +1,6 @@
 import { PUZZLE_GAP, PUZZLE_JOIN_REACH, puzzlePiece } from './puzzle-piece.js';
 import { contrastColor } from './colors.js';
-import { FONT_SIZE, LOGO_SIZE, GAP, number, escapeXML as escape, createImages, svgDocument, shadowFilter } from './svg.js';
+import { FONT_SIZE, LOGO_SIZE, GAP, number, escapeXML as escape, createImages, svgDocument, shadowFilter, opacityAttribute, clipOutsideCap } from './svg.js';
 import { prepareInput } from './input.js';
 import { optimizeOrder, bandContactScore } from './order.js';
 import { RADIAL_FONT_SIZE, renderRadialLayout } from './radial-layout.js';
@@ -79,10 +79,12 @@ export function renderCircularMosaic(components, options = {}, style) {
     const bases = [];
     const joins = [];
     const labels = [];
+    const roundEnds = !puzzle && segments.length > 1;
+    const separateFills = roundEnds && segments.some(segment => segment.opacity < 1);
     segments.forEach((segment, index) => {
-      const { name, logo, start, end, color, categoryId, width } = segment;
+      const { name, logo, start, end, color, categoryId, width, opacity } = segment;
       const id = `${idPrefix}-r${ring}-c${index}`;
-      const textColor = contrastColor(color);
+      const textColor = contrastColor(color, opacity);
       const category = categoryId === undefined ? '' : ` data-category-id="${escape(categoryId)}"`;
       const startVariant = ring + index;
       const endVariant = ring + (index + 1) % segments.length;
@@ -90,15 +92,22 @@ export function renderCircularMosaic(components, options = {}, style) {
       const base = segments.length === 1
         ? `<circle r="${number(radius)}" fill="none" stroke="${color}" stroke-width="${puzzle ? band - PUZZLE_GAP : band}"/>`
         : `<path${puzzle ? ' data-puzzle-piece=""' : ''} d="${puzzle ? piece.path : sector(radius, start, end, band)}" fill="${color}"/>`;
-      bases.push(`<g data-component="${escape(name)}"${category}>${base}</g>`);
-      if (segments.length > 1 && !puzzle) {
-        // Every join is a separate pass, including the last-to-first join. Clip
-        // shadows to the following strip so they merge cleanly into this strip.
-        defs.push(`<clipPath id="${id}-join"><path d="${sector(radius, end, end + band * 1.5 / radius, band)}"/></clipPath>`);
+      let caps = '', clip = '';
+      if (roundEnds) {
         const [x, y] = point(radius, end);
         const cap = `<circle cx="${x}" cy="${y}" r="${band / 2}" fill="${color}"`;
-        joins.push(`<g clip-path="url(#${id}-join)">${cap} filter="url(#${idPrefix}-shadow)"/></g>${cap}/>`);
+        if (separateFills) {
+          caps = `${cap}/>`;
+          clip = clipOutsideCap(defs, `${id}-fill`, point(radius, start), band / 2, extent);
+        }
+        const next = segments[(index + 1) % segments.length];
+        if (opacity === 1 && next.opacity === 1) {
+          defs.push(`<clipPath id="${id}-join"><path d="${sector(radius, end, end + band * 1.5 / radius, band)}"/></clipPath>`);
+          joins.push(`<g clip-path="url(#${id}-join)">${cap} filter="url(#${idPrefix}-shadow)"/></g>`);
+        }
+        if (!separateFills) joins.push(`${cap}/>`);
       }
+      bases.push(`<g data-component="${escape(name)}"${category}${opacityAttribute(opacity)}${clip}>${base}${caps}</g>`);
       const middle = segments.length === 1 ? -Math.PI / 2 + offset : puzzle ? piece.middle : (start + end) / 2 + band / (2 * radius);
       const lower = Math.sin(middle) > 0;
       const direction = lower ? -1 : 1;
