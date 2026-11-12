@@ -55,8 +55,11 @@ export function renderPuzzleMosaic(
 
 /** In radial mosaic, ring controls outward reach; components may be reordered within each level. */
 export type RadialMosaicComponent = RingMosaicComponent;
-/** Same options as ring mosaic; the default title is "Radial mosaic". */
-export type RadialMosaicOptions = RingMosaicOptions;
+/** The default title is "Radial mosaic". */
+export type RadialMosaicOptions = RingMosaicOptions & {
+  /** Scale text and logos with the leaf size, limited by the available space. Defaults to false. */
+  scaleRadialLabels?: boolean;
+};
 
 /** Outward tapered rays with rounded ends and an optional upright center logo. */
 export function renderRadialMosaic(

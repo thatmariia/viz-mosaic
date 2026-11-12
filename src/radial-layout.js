@@ -17,7 +17,8 @@ function rayPath(inner, outer, tip, cap) {
   return `M ${point(inner, tip, -1)} L ${point(outer, cap, -1)} A ${number(cap)} ${number(cap)} 0 1 1 ${point(outer, cap, 1)} L ${point(inner, tip, 1)} A ${number(tip)} ${number(tip)} 0 0 1 ${point(inner, tip, -1)} Z`;
 }
 
-export function renderRadialLayout(entries, { centerLogo, title, idPrefix, monochromeLogos, legend, keepInputOrder }) {
+export function renderRadialLayout(entries, { centerLogo, title, idPrefix, monochromeLogos, legend, keepInputOrder, scaleRadialLabels = false }) {
+  if (typeof scaleRadialLabels !== 'boolean') throw new TypeError('scaleRadialLabels must be a boolean.');
   const halfAngle = Math.PI / Math.max(3, entries.length);
   const sine = Math.sin(halfAngle), cosine = Math.cos(halfAngle);
   const innerRadius = Math.max(112, (MIN_TIP + 3) / sine - MIN_TIP);
@@ -28,6 +29,7 @@ export function renderRadialLayout(entries, { centerLogo, title, idPrefix, monoc
   // edges of neighboring rays are parallel, regardless of their reach.
   const offset = inner * sine - tip;
   const labelStart = (offset + (RADIAL_FONT_SIZE / 2 + 6) * cosine) / sine;
+  const labelHeightRun = RADIAL_FONT_SIZE / 2 * cosine / sine;
   let firstRadius = Math.max(220, (MIN_CAP + offset) / sine);
   for (const entry of entries) {
     const needed = labelStart + entry.width + 8;
@@ -36,6 +38,7 @@ export function renderRadialLayout(entries, { centerLogo, title, idPrefix, monoc
   if (firstRadius > 4096) {
     throw new RangeError('Radial mosaic cannot fit within the 4096px first-radius capacity. Shorten names or use fewer components.');
   }
+  const firstCap = firstRadius * sine - offset;
   const ordered = keepInputOrder ? entries : optimizeOrder(entries, items => items.length < 2 ? 0 : items.reduce((score, a, i) => {
     const b = items[(i + 1) % items.length];
     return score + (colorKey(a.color) === colorKey(b.color) ? firstRadius + (Math.min(a.ring, b.ring) - 1) * PITCH : 0);
@@ -56,10 +59,23 @@ export function renderRadialLayout(entries, { centerLogo, title, idPrefix, monoc
     const rotation = number(angle * 180 / Math.PI);
     const flip = Math.cos(angle) < -1e-8 ? 180 : 0;
     const textColor = contrastColor(color, opacity);
-    const labelEnd = logo ? outer - LOGO_SIZE / 2 - GAP : outer + cap - 14;
-    const labelCenter = (labelStart + labelEnd) / 2;
+    const labelLimit = logo ? outer - GAP : outer + cap;
+    const endPadding = logo ? LOGO_SIZE / 2 : 14;
+    let scale = 1;
+    if (scaleRadialLabels) {
+      // Growing the label pushes its start outward along the tapered sides.
+      // Reserve room for that shift and the logo or rounded end at the other side.
+      const fit = (labelLimit - labelStart + labelHeightRun - 8) / (entry.width + labelHeightRun + endPadding);
+      scale = Math.max(1, Math.min(cap / firstCap, fit));
+    }
+    const scaledStart = labelStart + labelHeightRun * (scale - 1);
+    const labelEnd = labelLimit - endPadding * scale;
+    const labelCenter = (scaledStart + labelEnd) / 2;
+    const fontSize = number(RADIAL_FONT_SIZE * scale);
+    const font = fontSize === RADIAL_FONT_SIZE ? '' : ` font-size="${fontSize}"`;
+    const logoSize = number(LOGO_SIZE * scale);
     const category = categoryId === undefined ? '' : ` data-category-id="${escapeXML(categoryId)}"`;
-    content.push(`<g data-component="${escapeXML(name)}" data-ring="${ring}" data-radius="${number(outer)}"${category} transform="rotate(${rotation})"><path d="${rayPath(inner, outer, tip, cap)}" fill="${color}"${opacityAttribute(opacity, 'fill-opacity')}/>${images.component(logo, number(outer), 0, flip, textColor, LOGO_SIZE)}<text x="0" y="${RADIAL_FONT_SIZE * 0.33}" fill="${textColor}" text-anchor="middle" xml:space="preserve" transform="translate(${number(labelCenter)} 0) rotate(${flip})">${escapeXML(name)}</text></g>`);
+    content.push(`<g data-component="${escapeXML(name)}" data-ring="${ring}" data-radius="${number(outer)}"${category} transform="rotate(${rotation})"><path d="${rayPath(inner, outer, tip, cap)}" fill="${color}"${opacityAttribute(opacity, 'fill-opacity')}/>${images.component(logo, number(outer), 0, flip, textColor, logoSize)}<text x="0" y="${number(fontSize * 0.33)}" fill="${textColor}"${font} text-anchor="middle" xml:space="preserve" transform="translate(${number(labelCenter)} 0) rotate(${flip})">${escapeXML(name)}</text></g>`);
   }
   content.push(images.center(centerLogo, entries.length ? innerRadius : 76));
   return svgDocument(title, idPrefix, extent, defs, content, RADIAL_FONT_SIZE, legend);
